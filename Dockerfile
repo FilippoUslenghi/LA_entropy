@@ -1,7 +1,7 @@
 FROM python:3.10.16-bullseye
 
 RUN mkdir /workspace
-
+COPY requirements.txt /workspace
 WORKDIR /workspace
 
 RUN apt-get update && apt-get install -y \
