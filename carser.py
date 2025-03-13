@@ -28,15 +28,14 @@ class Carser:
 
         self.LA_mesh_file = self.LA_map.get("FileNames")
 
-    def get_LA_map(self) -> ET.Element | None:
+    def get_LA_map(self) -> ET.Element:
         """
         Get the LA map from the study XML file.
         """
 
         # Check if the file exists
         if not os.path.exists(self.study_path):
-            print("File not found.")
-            return
+            raise FileNotFoundError(f"File {self.study_path} not found.")
         tree = ET.parse(self.study_path)
         # Get the root of the XML file
         root = tree.getroot()
@@ -46,34 +45,23 @@ class Carser:
 
         # Check if the 'Maps' tag exists
         if carto_maps is None:
-            print("Tag 'Maps' not found in the XML file.")
-            return
+            raise ValueError("Tag 'Maps' not found in the XML file.")
 
         # Check if there are any maps in the study
         if carto_maps.get("Count") == "0":
-            print("No maps found.")
-            return
+            raise ValueError("No maps found in the study.")
 
         # Get the LA map in the study
         LA_maps_count = 0
         for carto_map in carto_maps.findall("Map"):
             # Get the map name
             map_name = carto_map.get("Name")
-            if map_name is None:
-                print("Map name not found.")
-                continue
-            if "LA" in map_name and "Re" not in map_name:
+            if map_name is not None and "LA" in map_name and "Re" not in map_name:
                 LA_map = carto_map
                 LA_maps_count += 1
         # Check that there is only one LA map
         if LA_maps_count == 0 or LA_maps_count > 1:
-            print("There should be only one LA map.")
-            return
-
-        # Check if the LA map is not found
-        if LA_map is None:
-            print("LA map not found.")
-            return
+            raise ValueError("There should be only one LA map in the study.")
 
         return LA_map
 
@@ -85,12 +73,10 @@ class Carser:
         # Get the number of points in the LA map
         CartoPoints = map_.find("CartoPoints")
         if CartoPoints is None:
-            print("Tag 'CartoPoints' not found in the XML file.")
-            return
+            raise ValueError("Tag 'CartoPoints' not found in the XML file")
         points_count = CartoPoints.get("Count")
         if points_count is None:
-            print("Number of points not found.")
-            return
+            raise ValueError("Attribute 'Count' not found in the XML file")
         print(f"Number of points: {points_count}")
 
         # Get the paths to the Point_Export files
