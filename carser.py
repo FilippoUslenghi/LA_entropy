@@ -10,12 +10,13 @@ class Carser:
     """
     A parser for Carto3 V6 data files.
     """
-
     def __init__(self, path_to_study: str):
         """
         Initialize the Carser object.
         """
-
+        # Check if the file exists
+        if not os.path.exists(self.study_path):
+            raise FileNotFoundError(f"File {path_to_study} not found.")
         self.study_path = path_to_study
         self.patient = study_path.split("/")[4]
         self.LA_map = None
@@ -27,10 +28,6 @@ class Carser:
         """
         Get the study XML file.
         """
-
-        # Check if the file exists
-        if not os.path.exists(self.study_path):
-            raise FileNotFoundError(f"File {self.study_path} not found.")
         xml_tree = ET.parse(self.study_path)
 
         try:
@@ -62,7 +59,6 @@ class Carser:
         """
         Get the LA map from the study XML file.
         """
-
         # Get the root of the XML file
         root = xml_tree.getroot()
 
@@ -124,7 +120,6 @@ class Carser:
         """
         Get the points from the LA map.
         """
-
         # Get the number of points in the LA map
         CartoPoints = map_.find("CartoPoints")
         if CartoPoints is None:
