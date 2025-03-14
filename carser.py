@@ -23,8 +23,6 @@ class Carser:
         self.LA_points = None
         self.LA_mesh_file = None
 
-        self.get_study()
-
     def get_study(self) -> None:
         """
         Get the study XML file.
@@ -39,11 +37,13 @@ class Carser:
             self.LA_map = self.get_LA_map(xml_tree)
         except Exception as e:
             if (
-                len(e.args) > 0
-                and e.args[0]
+                e.args[0]
                 == "The ratio of the number of points between the first and second LA maps is too low."
             ):
                 print(f"Skipping patient {self.patient} due to low point ratio.")
+                return
+            elif e.args[0] == "No LA map found in the study.":
+                print(f"Skipping patient {self.patient} due to no LA map.")
                 return
             else:
                 # Print the state of the object
@@ -55,6 +55,8 @@ class Carser:
         self.LA_points = self.get_points(self.LA_map)
 
         self.LA_mesh_file = self.LA_map.get("FileNames")
+
+    __call__ = get_study
 
     def get_LA_map(self, xml_tree) -> ET.Element:
         """
@@ -150,7 +152,13 @@ if __name__ == "__main__":
         if patient == "Export_REDO-PVI-07_09_2024-13-39-51" or patient == "to-process":
             continue
 
-        subfolder = os.listdir(os.path.join(data_dir, patient))[0]
+        # Get the subfolders of the patient
+        subfolders = os.listdir(os.path.join(data_dir, patient))
+        # Check if list is empty
+        if not subfolders:
+            print(f"Skipping patient {patient} due to no data at all.")
+            continue
+        subfolder = subfolders[0]
         study_descriptions = subfolder.replace("Export_", "").split("-")
         study_xml = [
             f
@@ -158,18 +166,6 @@ if __name__ == "__main__":
             if all(desc in f for desc in study_descriptions)
         ][0]
 
-        # subfolder = os.listdir(os.path.join(data_dir, patient))[0]
-        # study_desc = re.findall(r"[A-Z]+", subfolder.replace("Export_", ""))
-        # # Find the study xml file
-        # study_xml = [
-        #     f
-        #     for f in os.listdir(os.path.join(data_dir, patient, subfolder))
-        #     if " " in f
-        # ]
-        # study_xml = [f for f in study_xml if all(desc in f for desc in study_desc) in f]
-        # # Create the path to the study
-        # study_path = os.path.join(data_dir, patient, subfolder, study_xml)
         study_path = os.path.join(data_dir, patient, subfolder, study_xml)
-        carser = Carser(
-            path_to_study=study_path,
-        )
+        carser = Carser(study_path)
+        carser()
