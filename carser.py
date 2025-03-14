@@ -10,12 +10,13 @@ class Carser:
     """
     A parser for Carto3 V6 data files.
     """
+
     def __init__(self, path_to_study: str):
         """
         Initialize the Carser object.
         """
         # Check if the file exists
-        if not os.path.exists(self.study_path):
+        if not os.path.exists(path_to_study):
             raise FileNotFoundError(f"File {path_to_study} not found.")
         self.study_path = path_to_study
         self.patient = study_path.split("/")[4]
