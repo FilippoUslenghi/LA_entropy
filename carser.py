@@ -14,6 +14,10 @@ class Carser:
         """
 
         self.study_path = path_to_study
+        self.LA_map = None
+        self.LA_map_name = None
+        self.LA_points = None
+        self.LA_mesh_file = None
 
     def get_study(self) -> None:
         """
@@ -52,6 +56,7 @@ class Carser:
             raise ValueError("No maps found in the study.")
 
         # Get the LA map in the study
+        LA_map = None
         LA_maps_count = 0
         for carto_map in carto_maps.findall("Map"):
             # Get the map name
@@ -59,6 +64,11 @@ class Carser:
             if map_name is not None and "LA" in map_name and "Re" not in map_name:
                 LA_map = carto_map
                 LA_maps_count += 1
+
+        # Check if one LA map was found
+        if LA_map is None:
+            raise ValueError("No LA map found in the study.")
+
         # Check that there is only one LA map
         if LA_maps_count == 0 or LA_maps_count > 1:
             raise ValueError("There should be only one LA map in the study.")
