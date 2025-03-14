@@ -145,7 +145,13 @@ if __name__ == "__main__":
     for patient in os.listdir(data_dir):
         if not os.path.isdir(os.path.join(data_dir, patient)):
             continue
-        if patient == "Export_REDO-PVI-07_09_2024-13-39-51" or patient == "to-process":
+        if patient == "to-process":
+            continue
+        if patient == "Export_REDO-PVI-07_09_2024-13-39-51":
+            carser = Carser(
+                os.path.join(data_dir, patient, "REDO PVI 07_09_2024 13-39-51.xml")
+            )
+            carser()
             continue
 
         # Get the subfolders of the patient
@@ -155,11 +161,11 @@ if __name__ == "__main__":
             print(f"Skipping patient {patient} due to no data at all.")
             continue
         subfolder = subfolders[0]
-        study_descriptions = subfolder.replace("Export_", "").split("-")
+        study_keywords = subfolder.replace("Export_", "").split("-")
         study_xml = [
             f
             for f in os.listdir(os.path.join(data_dir, patient, subfolder))
-            if all(desc in f for desc in study_descriptions)
+            if all(desc in f for desc in study_keywords)
         ][0]
 
         study_path = os.path.join(data_dir, patient, subfolder, study_xml)
