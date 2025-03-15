@@ -136,7 +136,24 @@ class Carser:
             *self.study_path.split(sep="/")[:-1],
             f"{map_.get('Name')}_Points_Export.xml",
         )
-        points_Export = ET.parse(points_Export_file)
+        points_export_collection = ET.parse(points_Export_file).getroot()
+        for point in points_export_collection.findall("Point"):
+            file_name = point.get("File_Name")
+            if file_name is None:
+                raise ValueError("Attribute 'File_Name' not found in the XML file")
+            point_export = os.path.join(
+                "/",
+                *self.study_path.split(sep="/")[:-1],
+                file_name,
+            )
+            point_export_tree = ET.parse(point_export)
+            point_export_root = point_export_tree.getroot()
+            CONNECTORS = [
+                "NAVISTAR_CONNECTOR",
+                "MAGNETIC_20_POLE_A_CONNECTOR",
+                "MAGNETIC_20_POLE_B_CONNECTOR",
+                "CS_CONNECTOR",
+            ]
 
 
 if __name__ == "__main__":
@@ -171,3 +188,4 @@ if __name__ == "__main__":
         study_path = os.path.join(data_dir, patient, subfolder, study_xml)
         carser = Carser(study_path)
         carser()
+        break
