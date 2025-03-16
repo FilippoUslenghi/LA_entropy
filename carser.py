@@ -11,14 +11,15 @@ class Carser:
     A parser for Carto3 V6 data files.
     """
 
-    def __init__(self, path_to_study: str):
+    def __init__(self, path_to_study_xml: str):
         """
         Initialize the Carser object.
         """
         # Check if the file exists
-        if not os.path.exists(path_to_study):
-            raise FileNotFoundError(f"File {path_to_study} not found.")
-        self.study_path = path_to_study
+        if not os.path.exists(path_to_study_xml):
+            raise FileNotFoundError(f"File {path_to_study_xml} not found.")
+        self.study_xml_path = path_to_study_xml
+        self.study_dir = os.path.dirname(self.study_xml_path)
         self.patient = study_path.split("/")[4]
         self.LA_map = None
         self.LA_map_name = None
@@ -29,7 +30,7 @@ class Carser:
         """
         Get the study XML file.
         """
-        xml_tree = ET.parse(self.study_path)
+        xml_tree = ET.parse(self.study_xml_path)
 
         try:
             self.LA_map = self.get_LA_map(xml_tree)
@@ -117,7 +118,7 @@ class Carser:
 
         return LA_map
 
-    def get_points(self, map_: ET.Element) -> None:
+    def get_points(self, map_: ET.Element) -> list[ET.Element]:
         """
         Get the points from the LA map.
         """
@@ -132,28 +133,24 @@ class Carser:
 
         # Get the paths to the Point_Export files
         points_Export_file = os.path.join(
-            "/",
-            *self.study_path.split(sep="/")[:-1],
+            self.study_dir,
             f"{map_.get('Name')}_Points_Export.xml",
         )
         points_export_collection = ET.parse(points_Export_file).getroot()
-        for point in points_export_collection.findall("Point"):
-            file_name = point.get("File_Name")
-            if file_name is None:
-                raise ValueError("Attribute 'File_Name' not found in the XML file")
-            point_export = os.path.join(
-                "/",
-                *self.study_path.split(sep="/")[:-1],
-                file_name,
-            )
-            point_export_tree = ET.parse(point_export)
-            point_export_root = point_export_tree.getroot()
-            CONNECTORS = [
-                "NAVISTAR_CONNECTOR",
-                "MAGNETIC_20_POLE_A_CONNECTOR",
-                "MAGNETIC_20_POLE_B_CONNECTOR",
-                "CS_CONNECTOR",
-            ]
+        point_export_list = points_export_collection.findall("Point")
+        return point_export_list
+
+    # def get_ECG(self, point_export: ET.Element):
+    #     for point in points_export_collection.findall("Point"):
+    #         file_name = point.get("File_Name")
+    #         if file_name is None:
+    #             raise ValueError("Attribute 'File_Name' not found in the XML file")
+    #         point_export = os.path.join(
+    #             self.study_dir,
+    #             file_name,
+    #         )
+    #         point_export_tree = ET.parse(point_export)
+    #         point_export_root = point_export_tree.getroot()
 
 
 if __name__ == "__main__":
