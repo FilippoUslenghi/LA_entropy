@@ -1,9 +1,7 @@
-import csv
 import os
-import re
-import math
-import xml.etree.ElementTree as ET
 import sys
+import xml.etree.ElementTree as ET
+import csv
 
 
 class Carser:
@@ -23,16 +21,18 @@ class Carser:
         self.patient = study_path.split("/")[4]
         self.LA_map = None
         self.LA_map_name = None
-        self.LA_points = None
         self.LA_mesh_file = None
+        self.LA_points = []
+        self.signals = []
 
-    def get_study(self) -> None:
+    def parse_study(self) -> None:
         """
         Get the study XML file.
         """
         xml_tree = ET.parse(self.study_xml_path)
 
         try:
+            # Get the LA map from the study XML file
             self.LA_map = self.get_LA_map(xml_tree)
         except Exception as e:
             if (
@@ -45,17 +45,22 @@ class Carser:
                 print(f"Skipping patient {self.patient} due to no LA map.")
                 return
             else:
-                # Print the state of the object
+                # Print the state of the object for debugging
                 print(self.__dict__)
                 # Stop the execution of the program
                 raise
 
+        # Get the name of the LA map
         self.LA_map_name = self.LA_map.get("Name")
-        self.LA_points = self.get_points(self.LA_map)
-
+        # Get the mesh file of the LA map
         self.LA_mesh_file = self.LA_map.get("FileNames")
+        # Get the points from the LA map
+        self.LA_points = self.get_points(self.LA_map)
+        # Get the data from the points
+        for point in self.LA_points:
+            self.get_data(point)
 
-    __call__ = get_study
+    __call__ = parse_study
 
     def get_LA_map(self, xml_tree) -> ET.Element:
         """
@@ -131,26 +136,70 @@ class Carser:
             raise ValueError("Attribute 'Count' not found in the XML file")
         print(f"Number of points: {points_count}")
 
-        # Get the paths to the Point_Export files
+        # Get the points from the LA map
         points_Export_file = os.path.join(
             self.study_dir,
             f"{map_.get('Name')}_Points_Export.xml",
         )
         points_export_collection = ET.parse(points_Export_file).getroot()
-        point_export_list = points_export_collection.findall("Point")
-        return point_export_list
+        points_list = points_export_collection.findall("Point")
+        return points_list
 
-    # def get_ECG(self, point_export: ET.Element):
-    #     for point in points_export_collection.findall("Point"):
-    #         file_name = point.get("File_Name")
-    #         if file_name is None:
-    #             raise ValueError("Attribute 'File_Name' not found in the XML file")
-    #         point_export = os.path.join(
-    #             self.study_dir,
-    #             file_name,
-    #         )
-    #         point_export_tree = ET.parse(point_export)
-    #         point_export_root = point_export_tree.getroot()
+    def get_data(self, point: ET.Element):
+        # Get the path to the point export file
+        point_export_filename = point.get("File_Name")
+        if point_export_filename is None:
+            raise ValueError("Attribute 'File_Name' not found in the XML file")
+        point_export_path = os.path.join(
+            self.study_dir,
+            point_export_filename,
+        )
+        point_export_tree = ET.parse(point_export_path)
+        point_export_root = point_export_tree.getroot()
+        self.signals = self.get_signals(point_export_root)
+
+    def get_signals(self, point: ET.Element) -> dict[str, list[str]]:
+        ECG_file = point.find("ECG")
+        if ECG_file is None:
+            raise ValueError("Tag 'ECG' not found in the XML file")
+        ECG_file_name = ECG_file.get("FileName")
+        if ECG_file_name is None:
+            raise ValueError("Attribute 'FileName' not found in the XML file")
+        ECG_file_path = os.path.join(
+            self.study_dir,
+            ECG_file_name,
+        )
+
+        with open(ECG_file_path, "r") as file:
+            # Skip the first two lines
+            file.readline()
+            file.readline()
+            # Read the ECG file header
+            header = file.readline().split()
+            # Remove the text inside parentheses from the column names
+            header = [col.split("(")[0] for col in header]
+            # Add an empty string to the header because of formatting issues
+            header.append("")
+            # Read the ECG file
+            reader = csv.reader(
+                file,
+                delimiter=" ",
+                skipinitialspace=True,
+                strict=True,
+                quoting=csv.QUOTE_NONNUMERIC,
+            )
+            # for _ in range(2):
+            #     next(reader)
+            # header = next(reader)
+            # Read the data
+            data = list(reader)
+            # Create a DataFrame
+            data_dict = {key: list(val) for key, val in zip(header, zip(*data))}
+            # Check if last key is an empty string and remove it
+            if data_dict[""]:
+                del data_dict[""]
+
+        return data_dict
 
 
 if __name__ == "__main__":
