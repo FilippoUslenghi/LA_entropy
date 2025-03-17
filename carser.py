@@ -23,7 +23,7 @@ class Carser:
         self.LA_map_name = None
         self.LA_mesh_file = None
         self.LA_points = []
-        self.signals = []
+        self.points_data = {}
 
     def parse_study(self) -> None:
         """
@@ -58,7 +58,7 @@ class Carser:
         self.LA_points = self.get_points(self.LA_map)
         # Get the data from the points
         for point in self.LA_points:
-            self.get_data(point)
+            self.points_data[point.get("ID")] = self.get_point_data(point)
 
     __call__ = parse_study
 
@@ -134,7 +134,7 @@ class Carser:
         points_count = CartoPoints.get("Count")
         if points_count is None:
             raise ValueError("Attribute 'Count' not found in the XML file")
-        print(f"Number of points: {points_count}")
+        print(f"Patient {self.patient}. Number of points: {points_count}")
 
         # Get the points from the LA map
         points_Export_file = os.path.join(
@@ -143,9 +143,10 @@ class Carser:
         )
         points_export_collection = ET.parse(points_Export_file).getroot()
         points_list = points_export_collection.findall("Point")
+
         return points_list
 
-    def get_data(self, point: ET.Element):
+    def get_point_data(self, point: ET.Element):
         # Get the path to the point export file
         point_export_filename = point.get("File_Name")
         if point_export_filename is None:
@@ -156,10 +157,14 @@ class Carser:
         )
         point_export_tree = ET.parse(point_export_path)
         point_export_root = point_export_tree.getroot()
-        self.signals = self.get_signals(point_export_root)
+        data = {}
+        data["signals"] = self.get_signals(point_export_root)
+        data["electrode_positions"] = self.get_electrode_positions(point_export_root)
 
-    def get_signals(self, point: ET.Element) -> dict[str, list[str]]:
-        ECG_file = point.find("ECG")
+        return data
+
+    def get_signals(self, point_xml_root: ET.Element) -> dict[str, list[str]]:
+        ECG_file = point_xml_root.find("ECG")
         if ECG_file is None:
             raise ValueError("Tag 'ECG' not found in the XML file")
         ECG_file_name = ECG_file.get("FileName")
@@ -188,9 +193,6 @@ class Carser:
                 strict=True,
                 quoting=csv.QUOTE_NONNUMERIC,
             )
-            # for _ in range(2):
-            #     next(reader)
-            # header = next(reader)
             # Read the data
             data = list(reader)
             # Create a DataFrame
@@ -200,6 +202,9 @@ class Carser:
                 del data_dict[""]
 
         return data_dict
+
+    def get_electrode_positions(self, point_xml_root: ET.Element):
+        pass
 
 
 if __name__ == "__main__":
