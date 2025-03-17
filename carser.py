@@ -2,6 +2,18 @@ import os
 import sys
 import xml.etree.ElementTree as ET
 import csv
+import logging
+
+
+# Set up logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(name)s - %(levelname)s - %(message)s",
+    filename="carser.log",
+    encoding="utf-8",
+    filemode="a",
+)
+logger = logging.getLogger(__name__)
 
 
 class Carser:
@@ -238,5 +250,6 @@ if __name__ == "__main__":
 
         study_path = os.path.join(data_dir, patient, subfolder, study_xml)
         carser = Carser(study_path)
+        logging.debug(f"Processing patient {patient}")
         carser()
         break
