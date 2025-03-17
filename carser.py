@@ -2,8 +2,8 @@ import os
 import sys
 import xml.etree.ElementTree as ET
 import csv
-import logging
 import scipy.io as sio
+import logging
 
 
 # Set up logging
@@ -296,6 +296,8 @@ if __name__ == "__main__":
             carser()
             continue
 
+        out_dir = os.path.join(data_dir.replace("raw_data", "processed_data"), patient)
+        os.makedirs(out_dir, exist_ok=True)
         # Get the subfolders of the patient
         subfolders = os.listdir(os.path.join(data_dir, patient))
         # Check if list is empty
@@ -314,4 +316,5 @@ if __name__ == "__main__":
         carser = Carser(study_path)
         logging.debug(f"Processing patient {patient}")
         carser()
-        break
+        sio.savemat(os.path.join(out_dir, "LA_mesh.mat"), carser.LA_mesh)
+        break  # Debugging
