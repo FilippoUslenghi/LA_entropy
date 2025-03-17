@@ -3,6 +3,7 @@ import sys
 import xml.etree.ElementTree as ET
 import csv
 import logging
+import scipy.io as sio
 
 
 # Set up logging
@@ -34,6 +35,7 @@ class Carser:
         self.LA_map = None
         self.LA_map_name = None
         self.LA_mesh_file = None
+        self.LA_mesh = None
         self.LA_points = []
         self.points_data = {}
 
@@ -66,11 +68,16 @@ class Carser:
         self.LA_map_name = self.LA_map.get("Name")
         # Get the mesh file of the LA map
         self.LA_mesh_file = self.LA_map.get("FileNames")
+        if self.LA_mesh_file is None:
+            raise ValueError("Attribute 'FileNames' not found in the XML file")
+        # Get the mesh of the LA map
+        self.LA_mesh = self.get_mesh(self.LA_mesh_file)
         # Get the points from the LA map
         self.LA_points = self.get_points(self.LA_map)
         # Get the data from the points
         for point in self.LA_points:
             self.points_data[point.get("ID")] = self.get_point_data(point)
+            return  # Debugging
 
     __call__ = parse_study
 
@@ -109,9 +116,7 @@ class Carser:
 
         # Check if there are any LA maps in the study
         if len(LA_maps) == 0:
-            raise ValueError(
-                "No LA map found in the study."
-            )  # TODO: some patients have no LA map, skip them?
+            raise ValueError("No LA map found in the study.")
 
         # Sort the LA maps by the number of points
         sorted_LA_maps = sorted(LA_maps, key=lambda x: x[1], reverse=True)
@@ -146,7 +151,6 @@ class Carser:
         points_count = CartoPoints.get("Count")
         if points_count is None:
             raise ValueError("Attribute 'Count' not found in the XML file")
-        print(f"Patient {self.patient}. Number of points: {points_count}")
 
         # Get the points from the LA map
         points_Export_file = os.path.join(
@@ -217,6 +221,64 @@ class Carser:
 
     def get_electrode_positions(self, point_xml_root: ET.Element):
         pass
+
+    def get_mesh(self, mesh_file: str) -> dict[str, list[tuple]]:
+        """
+        Get the mesh of the LA map.
+        """
+        # Get the path to the mesh file
+        mesh_file_path = os.path.join(
+            self.study_dir,
+            mesh_file,
+        )
+        # Parse the mesh file
+        mesh = {}
+        vertices = []
+        GroupID = []
+        triangles = []
+        with open(mesh_file_path, "r", encoding="iso-8859-1") as file:
+            line = file.readline()
+            while "[VerticesSection]" not in line:
+                line = file.readline()
+            line = file.readline()
+            line = file.readline()
+            line = file.readline()
+            # Load the vertices
+            while line != "\n":
+                # Split the line by whitespaces
+                line_split = line.split()
+                # Append the values to the lists
+                x = float(line_split[2])
+                y = float(line_split[3])
+                z = float(line_split[4])
+                vertices.append((x, y, z))
+                GroupID.append(int(line_split[8]))
+                line = file.readline()
+
+            # Load the triangles
+            while "[TrianglesSection]" not in line:
+                line = file.readline()
+            line = file.readline()
+            line = file.readline()
+            line = file.readline()
+            while line != "\n":
+                # Split the line by whitespaces
+                line_split = line.split()
+                # Append the values to the list
+                triangles.append(
+                    (
+                        int(line_split[2]),
+                        int(line_split[3]),
+                        int(line_split[4]),
+                    )
+                )
+                line = file.readline()
+
+        mesh["vertices"] = vertices
+        mesh["triangles"] = triangles
+        mesh["GroupID"] = GroupID
+
+        return mesh
 
 
 if __name__ == "__main__":
