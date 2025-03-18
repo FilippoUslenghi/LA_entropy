@@ -179,7 +179,7 @@ class Carser:
         point_export_root = point_export_tree.getroot()
 
         # Check which connectors were used
-        connectors = point_export_root.findall("Connector")
+        connectors = point_export_root.find("Positions").findall("Connector")  # type: ignore
         if not (self.pole_A or self.pole_B or self.mcc_dx):
             for connector in connectors:
                 if connector.get("MAGNETIC_20_POLE_A_CONNECTOR") is not None:
@@ -194,7 +194,7 @@ class Carser:
 
             if self.mcc_dx and (self.pole_A or self.pole_B):
                 raise ValueError("MCC-DX and 20 Pole A or B connectors were used.")
-        return {}  # Debugging
+
         # Get the ECG file
         ECG_file = point_export_root.find("ECG")
         if ECG_file is None:
