@@ -5,7 +5,6 @@ import csv
 import scipy.io as sio
 import logging
 
-
 # Set up logging
 logging.basicConfig(
     level=logging.DEBUG,
@@ -38,6 +37,11 @@ class Carser:
         self.LA_mesh = None
         self.LA_points = []
         self.points_signals = {}
+
+        # Connectors
+        self.pole_A = False
+        self.pole_B = False
+        self.mcc_dx = False
 
     def parse_study(self) -> None:
         """
@@ -173,6 +177,25 @@ class Carser:
         )
         point_export_tree = ET.parse(point_export_path)
         point_export_root = point_export_tree.getroot()
+
+        # Check which connectors were used
+        connectors = point_export_root.findall("Connector")
+        if not (self.pole_A or self.pole_B or self.mcc_dx):
+            for connector in connectors:
+                if connector.get("MAGNETIC_20_POLE_A_CONNECTOR") is not None:
+                    self.pole_A = True
+
+                if connector.get("MAGNETIC_20_POLE_B_CONNECTOR") is not None:
+                    self.pole_B = True
+                    print(self.patient)
+
+                if connector.get("MCC_DX_CONNECTOR") is not None:
+                    self.mcc_dx = True
+
+            if self.mcc_dx and (self.pole_A or self.pole_B):
+                raise ValueError("MCC-DX and 20 Pole A or B connectors were used.")
+        return {}  # Debugging
+        # Get the ECG file
         ECG_file = point_export_root.find("ECG")
         if ECG_file is None:
             raise ValueError("Tag 'ECG' not found in the XML file")
@@ -187,13 +210,14 @@ class Carser:
         with open(ECG_file_path, "r") as file:
             # Skip the first two lines
             file.readline()
-            file.readline()
+            line = file.readline()
+            # Get the gain value
+            gain = float(line.split("=")[1])
             # Read the ECG file header
             header = file.readline().split()
             # Remove the text inside parentheses from the column names
             header = [col.split("(")[0] for col in header]
-            # Add an empty string to the header because of formatting issues
-            header.append("")
+
             # Read the ECG file
             reader = csv.reader(
                 file,
@@ -309,17 +333,17 @@ if __name__ == "__main__":
         carser = Carser(study_path)
         logging.debug(f"Processing patient {patient}")
         carser()
-        sio.savemat(
-            os.path.join(out_dir, "LA_mesh.mat"),
-            carser.LA_mesh,
-            oned_as="column",
-        )
-        sio.savemat(
-            os.path.join(out_dir, "points_signals.mat"),
-            carser.points_signals,
-            oned_as="column",
-        )
-        break  # Debugging
+        # sio.savemat(
+        #     os.path.join(out_dir, "LA_mesh.mat"),
+        #     carser.LA_mesh,
+        #     oned_as="column",
+        # )
+        # sio.savemat(
+        #     os.path.join(out_dir, "points_signals.mat"),
+        #     carser.points_signals,
+        #     oned_as="column",
+        # )
+        # break  # Debugging
 
         # TODO: use numpy to store the data in a more efficient way
         # TODO: maybe use pandas to store the data in a more efficient way
