@@ -12,7 +12,7 @@ logging.basicConfig(
     format="%(name)s - %(levelname)s - %(message)s",
     filename="carser.log",
     encoding="utf-8",
-    filemode="a",
+    filemode="w",
 )
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class Carser:
         self.LA_mesh_file = None
         self.LA_mesh = None
         self.LA_points = []
-        self.points_data = {}
+        self.points_signals = {}
 
     def parse_study(self) -> None:
         """
@@ -76,7 +76,7 @@ class Carser:
         self.LA_points = self.get_points(self.LA_map)
         # Get the data from the points
         for point in self.LA_points:
-            self.points_data[point.get("ID")] = self.get_point_data(point)
+            self.points_signals[point.get("ID")] = self.get_signals(point)
             return  # Debugging
 
     __call__ = parse_study
@@ -162,7 +162,7 @@ class Carser:
 
         return points_list
 
-    def get_point_data(self, point: ET.Element):
+    def get_signals(self, point: ET.Element) -> dict[str, list[str]]:
         # Get the path to the point export file
         point_export_filename = point.get("File_Name")
         if point_export_filename is None:
@@ -173,14 +173,7 @@ class Carser:
         )
         point_export_tree = ET.parse(point_export_path)
         point_export_root = point_export_tree.getroot()
-        data = {}
-        data["signals"] = self.get_signals(point_export_root)
-        data["electrode_positions"] = self.get_electrode_positions(point_export_root)
-
-        return data
-
-    def get_signals(self, point_xml_root: ET.Element) -> dict[str, list[str]]:
-        ECG_file = point_xml_root.find("ECG")
+        ECG_file = point_export_root.find("ECG")
         if ECG_file is None:
             raise ValueError("Tag 'ECG' not found in the XML file")
         ECG_file_name = ECG_file.get("FileName")
@@ -316,5 +309,17 @@ if __name__ == "__main__":
         carser = Carser(study_path)
         logging.debug(f"Processing patient {patient}")
         carser()
-        sio.savemat(os.path.join(out_dir, "LA_mesh.mat"), carser.LA_mesh)
+        sio.savemat(
+            os.path.join(out_dir, "LA_mesh.mat"),
+            carser.LA_mesh,
+            oned_as="column",
+        )
+        sio.savemat(
+            os.path.join(out_dir, "points_signals.mat"),
+            carser.points_signals,
+            oned_as="column",
+        )
         break  # Debugging
+
+        # TODO: use numpy to store the data in a more efficient way
+        # TODO: maybe use pandas to store the data in a more efficient way

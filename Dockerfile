@@ -6,6 +6,8 @@ WORKDIR /workspace
 
 RUN apt-get update && apt-get install -y \
     tree
+    man
+    sudo
 
 RUN pip install -r requirements.txt
 
