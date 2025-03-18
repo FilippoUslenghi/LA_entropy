@@ -4,6 +4,8 @@ import xml.etree.ElementTree as ET
 import csv
 import scipy.io as sio
 import logging
+import numpy as np
+import pandas as pd
 
 # Set up logging
 logging.basicConfig(
@@ -37,11 +39,6 @@ class Carser:
         self.LA_mesh = None
         self.LA_points = []
         self.points_signals = {}
-
-        # Connectors
-        self.pole_A = False
-        self.pole_B = False
-        self.mcc_dx = False
 
     def parse_study(self) -> None:
         """
@@ -79,9 +76,19 @@ class Carser:
         # Get the points from the LA map
         self.LA_points = self.get_points(self.LA_map)
         # Get the data from the points
+        self.points_signals["signals"] = []
+        self.points_signals["points_IDs"] = []
         for point in self.LA_points:
-            self.points_signals[point.get("ID")] = self.get_signals(point)
-            return  # Debugging
+            logger.debug(
+                f"Processing point {point.get('ID')} of patient {self.patient}"
+            )
+            signals, columns = self.get_signals(point)
+            if signals is None:
+                continue
+            self.points_signals["signals"].append(signals)
+            self.points_signals["points_IDs"].append(point.get("ID"))
+            self.points_signals["columns"] = columns
+            # return  # Debugging
 
     __call__ = parse_study
 
@@ -166,7 +173,9 @@ class Carser:
 
         return points_list
 
-    def get_signals(self, point: ET.Element) -> dict[str, list[str]]:
+    def get_signals(
+        self, point: ET.Element
+    ) -> tuple[np.ndarray | None, list[str] | None]:
         # Get the path to the point export file
         point_export_filename = point.get("File_Name")
         if point_export_filename is None:
@@ -180,20 +189,26 @@ class Carser:
 
         # Check which connectors were used
         connectors = point_export_root.find("Positions").findall("Connector")  # type: ignore
-        if not (self.pole_A or self.pole_B or self.mcc_dx):
+        has_pole_a = False
+        has_mcc_dx = False
+        if not (has_pole_a or has_mcc_dx):
             for connector in connectors:
                 if connector.get("MAGNETIC_20_POLE_A_CONNECTOR") is not None:
-                    self.pole_A = True
-
-                if connector.get("MAGNETIC_20_POLE_B_CONNECTOR") is not None:
-                    self.pole_B = True
-                    print(self.patient)
+                    has_pole_a = True
 
                 if connector.get("MCC_DX_CONNECTOR") is not None:
-                    self.mcc_dx = True
+                    has_mcc_dx = True
 
-            if self.mcc_dx and (self.pole_A or self.pole_B):
-                raise ValueError("MCC-DX and 20 Pole A or B connectors were used.")
+            if has_mcc_dx and has_pole_a:
+                raise ValueError(
+                    "MCC-DX and 20 Pole A connectors present in the same point export."
+                )
+
+        if not (has_pole_a or has_mcc_dx):
+            print(
+                f"Skipping point {point.get('ID')} of patient {self.patient} due to no connectors."
+            )
+            return (None, None)
 
         # Get the ECG file
         ECG_file = point_export_root.find("ECG")
@@ -207,34 +222,117 @@ class Carser:
             ECG_file_name,
         )
 
+        # Get the ECG data
+        ECG_columns = [
+            "V1(22)",
+            "V2(23)",
+            "V3(24)",
+            "V4(25)",
+            "V5(26)",
+            "V6(27)",
+            "I(110)",
+            "II(111)",
+            "III(112)",
+            "aVL(171)",
+            "aVR(172)",
+            "aVF(173)",
+        ]
+        CS_columns = ["CS1-CS2(101)", "CS5-CS6(105)", "CS9-CS10(109)"]
+        pole_columns = []
+        if has_pole_a:
+            pole_columns = [
+                "20A_1-2(113)",
+                "20A_2-3(114)",
+                "20A_3-4(115)",
+                "20A_5-6(117)",
+                "20A_6-7(118)",
+                "20A_7-8(119)",
+                "20A_9-10(121)",
+                "20A_10-11(122)",
+                "20A_11-12(123)",
+                "20A_13-14(125)",
+                "20A_14-15(126)",
+                "20A_15-16(127)",
+                "20A_17-18(129)",
+                "20A_18-19(130)",
+                "20A_19-20(131)",
+            ]
+        elif has_mcc_dx:
+            pole_columns = [
+                "MCC_Dx_BiPolar_1(197)",
+                "MCC_Dx_BiPolar_2(198)",
+                "MCC_Dx_BiPolar_3(199)",
+                "MCC_Dx_BiPolar_4(200)",
+                "MCC_Dx_BiPolar_5(201)",
+                "MCC_Dx_BiPolar_6(202)",
+                "MCC_Dx_BiPolar_7(203)",
+                "MCC_Dx_BiPolar_8(204)",
+                "MCC_Dx_BiPolar_9(205)",
+                "MCC_Dx_BiPolar_10(206)",
+                "MCC_Dx_BiPolar_11(207)",
+                "MCC_Dx_BiPolar_12(208)",
+                "MCC_Dx_BiPolar_13(209)",
+                "MCC_Dx_BiPolar_14(210)",
+                "MCC_Dx_BiPolar_15(211)",
+                "MCC_Dx_BiPolar_16(212)",
+                "MCC_Dx_BiPolar_17(213)",
+                "MCC_Dx_BiPolar_18(214)",
+                "MCC_Dx_BiPolar_19(215)",
+                "MCC_Dx_BiPolar_20(216)",
+                "MCC_Dx_BiPolar_21(217)",
+                "MCC_Dx_BiPolar_22(218)",
+                "MCC_Dx_BiPolar_23(219)",
+                "MCC_Dx_BiPolar_24(220)",
+                "MCC_Dx_BiPolar_25(221)",
+                "MCC_Dx_BiPolar_26(222)",
+                "MCC_Dx_BiPolar_27(223)",
+                "MCC_Dx_BiPolar_28(224)",
+                "MCC_Dx_BiPolar_29(225)",
+                "MCC_Dx_BiPolar_30(226)",
+                "MCC_Dx_BiPolar_31(227)",
+                "MCC_Dx_BiPolar_32(228)",
+                "MCC_Dx_BiPolar_33(229)",
+                "MCC_Dx_BiPolar_34(230)",
+                "MCC_Dx_BiPolar_35(231)",
+                "MCC_Dx_BiPolar_36(232)",
+                "MCC_Dx_BiPolar_37(233)",
+                "MCC_Dx_BiPolar_38(234)",
+                "MCC_Dx_BiPolar_39(235)",
+                "MCC_Dx_BiPolar_40(236)",
+            ]
+
+        columns = pole_columns + ECG_columns + CS_columns
+        signal_data = (
+            pd.read_csv(
+                ECG_file_path,
+                skiprows=2,
+                sep=" ",
+                skipinitialspace=True,
+                usecols=columns,
+            )
+            .sort_values(axis=0, by=columns)
+            .to_numpy(dtype=np.float64)
+        )
+
+        # Get the gain value
         with open(ECG_file_path, "r") as file:
             # Skip the first two lines
             file.readline()
             line = file.readline()
             # Get the gain value
             gain = float(line.split("=")[1])
-            # Read the ECG file header
-            header = file.readline().split()
-            # Remove the text inside parentheses from the column names
-            header = [col.split("(")[0] for col in header]
 
-            # Read the ECG file
-            reader = csv.reader(
-                file,
-                delimiter=" ",
-                skipinitialspace=True,
-                strict=True,
-                quoting=csv.QUOTE_NONNUMERIC,
-            )
-            # Read the data
-            data = list(reader)
-            # Create a DataFrame
-            data_dict = {key: list(val) for key, val in zip(header, zip(*data))}
-            # Check if last key is an empty string and remove it
-            if data_dict[""]:
-                del data_dict[""]
+        signal_data = signal_data * gain
+        columns = [column.split("(")[0] for column in columns]
 
-        return data_dict
+        # data_dict = np.empty([1 + 2500, len(columns)], dtype=object)
+        # data_dict[0, :] = columns
+        # data_dict[1:, :] = signal_data
+        # for i, column in enumerate(columns, start=1):
+        #     column = column.split("(")[0]
+        #     data_dict[column] = signal_data[:, i]
+
+        return signal_data, columns
 
     def get_electrode_positions(self, point_xml_root: ET.Element):
         pass
@@ -333,17 +431,14 @@ if __name__ == "__main__":
         carser = Carser(study_path)
         logging.debug(f"Processing patient {patient}")
         carser()
-        # sio.savemat(
-        #     os.path.join(out_dir, "LA_mesh.mat"),
-        #     carser.LA_mesh,
-        #     oned_as="column",
-        # )
-        # sio.savemat(
-        #     os.path.join(out_dir, "points_signals.mat"),
-        #     carser.points_signals,
-        #     oned_as="column",
-        # )
+        sio.savemat(
+            os.path.join(out_dir, "LA_mesh.mat"),
+            carser.LA_mesh,
+            oned_as="column",
+        )
+        sio.savemat(
+            os.path.join(out_dir, "points_signals.mat"),
+            carser.points_signals,
+            oned_as="column",
+        )
         # break  # Debugging
-
-        # TODO: use numpy to store the data in a more efficient way
-        # TODO: maybe use pandas to store the data in a more efficient way
