@@ -1,7 +1,6 @@
 import os
 import sys
 import xml.etree.ElementTree as ET
-import csv
 import scipy.io as sio
 import logging
 import numpy as np
@@ -61,6 +60,7 @@ class Carser:
                 return
             else:
                 # Print the state of the object for debugging
+                print(e)
                 print(self.__dict__)
                 # Stop the execution of the program
                 raise
@@ -86,7 +86,7 @@ class Carser:
             if signals is None:
                 continue
             self.points_signals["signals"].append(signals)
-            self.points_signals["points_IDs"].append(point.get("ID"))
+            self.points_signals["points_IDs"].append(int(point.get("ID")))  # type: ignore
             self.points_signals["columns"] = columns
             # return  # Debugging
 
@@ -301,18 +301,32 @@ class Carser:
                 "MCC_Dx_BiPolar_40(236)",
             ]
 
-        columns = pole_columns + ECG_columns + CS_columns
-        signal_data = (
-            pd.read_csv(
-                ECG_file_path,
-                skiprows=2,
-                sep=" ",
-                skipinitialspace=True,
-                usecols=columns,
+        try:
+            columns = pole_columns + ECG_columns + CS_columns
+            signal_data = (
+                pd.read_csv(
+                    ECG_file_path,
+                    skiprows=2,
+                    sep=" ",
+                    skipinitialspace=True,
+                    usecols=columns,
+                )
+                .sort_values(axis=0, by=columns)
+                .to_numpy(dtype=np.float64)
             )
-            .sort_values(axis=0, by=columns)
-            .to_numpy(dtype=np.float64)
-        )
+        except:
+            columns = pole_columns + ECG_columns
+            signal_data = (
+                pd.read_csv(
+                    ECG_file_path,
+                    skiprows=2,
+                    sep=" ",
+                    skipinitialspace=True,
+                    usecols=columns,
+                )
+                .reindex(columns, axis=1)
+                .to_numpy(dtype=np.float64)
+            )
 
         # Get the gain value
         with open(ECG_file_path, "r") as file:
@@ -426,19 +440,21 @@ if __name__ == "__main__":
             for f in os.listdir(os.path.join(data_dir, patient, subfolder))
             if all(desc in f for desc in study_keywords)
         ][0]
-
         study_path = os.path.join(data_dir, patient, subfolder, study_xml)
         carser = Carser(study_path)
         logging.debug(f"Processing patient {patient}")
-        carser()
-        sio.savemat(
-            os.path.join(out_dir, "LA_mesh.mat"),
-            carser.LA_mesh,
-            oned_as="column",
-        )
-        sio.savemat(
-            os.path.join(out_dir, "points_signals.mat"),
-            carser.points_signals,
-            oned_as="column",
-        )
+        try:
+            carser()
+            sio.savemat(
+                os.path.join(out_dir, "LA_mesh.mat"),
+                carser.LA_mesh,
+                oned_as="column",
+            )
+            sio.savemat(
+                os.path.join(out_dir, "points_signals.mat"),
+                carser.points_signals,
+                oned_as="column",
+            )
+        except Exception as e:
+            logging.error(f"Error processing patient {patient}: {e}", exc_info=True)
         # break  # Debugging
