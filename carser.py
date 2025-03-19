@@ -483,6 +483,8 @@ class Carser:
             1, 2, 0
         )  # shape = [n_dipoles, n_coordinates, n_samples]
 
+        return positions_of_dipoles  # TODO: check that in the file there are all the splines
+
         electrodes = positions_df.loc[:, "Electrode#"].to_numpy(dtype=np.int32)
 
     def get_mesh(self, mesh_file: str) -> dict[str, list[tuple]]:
