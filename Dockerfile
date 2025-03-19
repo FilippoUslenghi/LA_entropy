@@ -14,4 +14,4 @@ RUN pip install -r requirements.txt
 # docker build -f Dockerfile -t uslenghi_image .
 
 # Run the container with the following command:
-# docker run -it --name uslenghi_container -v /mnt/ABLAZIONE/raw_data:/workspace/raw_data:ro  -v /home/uslenghi/LA_entropy:/workspace uslenghi_image bash &
+# docker run -it --name uslenghi_container -v /mnt/ABLAZIONE/raw_data:/workspace/raw_data:ro -v /dumpall/uslenghi/LA_entropy/processed_data:/workspace/processed_data -v /home/uslenghi/LA_entropy:/workspace uslenghi_image bash &
