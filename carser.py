@@ -75,11 +75,13 @@ class Carser:
         self.LA_mesh = self.get_mesh(self.LA_mesh_file)
         # Get the points from the LA map
         self.LA_points = self.get_points(self.LA_map)
-        if len(self.LA_points) > 4500:
-            print(f"Skipping patient {self.patient} due to too many points.")
+        if len(self.LA_points) > 4000:
+            print(f"Processing patient {self.patient} with high number of points.")
             with open("skipped_patients.txt", "a") as file:
-                file.write(f"Skipping patient {self.patient} due to too many points.\n")
-            return
+                file.write(
+                    f"Processing patient {self.patient} with high number of points."
+                )
+            # return # Debugging
 
         # Discover the number of valid points
         valid_points = 0
@@ -90,7 +92,7 @@ class Carser:
 
         # Get the data from the points
         self.points_signals["signals"] = np.zeros(
-            [valid_points, 2500, 12 + 3 + 40], dtype=np.float64
+            [valid_points, 2500, 12 + 3 + 40], dtype=np.float32
         )  # Overestimated number of columns, will be shrinked later
         self.points_signals["points_IDs"] = 1 * np.ones([valid_points], dtype=np.int32)
         for p, point in enumerate(self.LA_points):
@@ -485,4 +487,4 @@ if __name__ == "__main__":
             )
         except Exception as e:
             logging.error(f"Error processing patient {patient}: {e}", exc_info=True)
-        break  # Debugging
+        # break  # Debugging
