@@ -37,7 +37,7 @@ class Carser:
         self.LA_mesh_file = None
         self.LA_mesh = None
         self.LA_points = []
-        self.points_signals = {}
+        self.points_data = {}
 
     def parse_study(self) -> None:
         """
@@ -67,35 +67,37 @@ class Carser:
 
         # Get the name of the LA map
         self.LA_map_name = self.LA_map.get("Name")
+
         # Get the mesh file of the LA map
         self.LA_mesh_file = self.LA_map.get("FileNames")
         if self.LA_mesh_file is None:
             raise ValueError("Attribute 'FileNames' not found in the XML file")
         # Get the mesh of the LA map
         self.LA_mesh = self.get_mesh(self.LA_mesh_file)
+
         # Get the points from the LA map
         self.LA_points = self.get_points(self.LA_map)
         if len(self.LA_points) > 4000:
             print(f"Processing patient {self.patient} with high number of points.")
             with open("skipped_patients.txt", "a") as file:
                 file.write(
-                    f"Processing patient {self.patient} with high number of points."
+                    f"Processing patient {self.patient} with high number of points.\n"
                 )
             # return # Debugging
 
-        # Discover the number of valid points
+        # Discover the number of valid points to preallocate the signals array
         valid_points = 0
         for point in self.LA_points:
             _, flag = self.get_signals(point, dry_run=True)
             if flag == ["valid"]:
                 valid_points += 1
 
-        # Get the data from the points
-        self.points_signals["signals"] = np.zeros(
+        # Get the signals from the points
+        self.points_data["signals"] = np.zeros(
             [valid_points, 2500, 12 + 3 + 40], dtype=np.float32
         )  # Overestimated number of columns, will be shrinked later
-        self.points_signals["points_IDs"] = 1 * np.ones([valid_points], dtype=np.int32)
-        for p, point in enumerate(self.LA_points):
+        self.points_data["points_IDs"] = 1 * np.ones([valid_points], dtype=np.int32)
+        for i, point in enumerate(self.LA_points):
             point_ID = point.get("ID")
             if point_ID is None:
                 raise ValueError("Attribute 'ID' not found in the XML file")
@@ -105,17 +107,25 @@ class Carser:
             signals, columns = self.get_signals(point)
             if signals is None:
                 continue
-            self.points_signals["signals"][p, :, : signals.shape[1]] = signals
-            self.points_signals["points_IDs"][p] = int(point_ID)
-            self.points_signals["columns"] = columns
+            # Get the signals from the point
+            # self.points_data["signals"][i, :, : signals.shape[1]] = signals
+            # Get the point ID
+            # self.points_data["points_IDs"][i] = int(point_ID)
+            # Get the column names
+            # self.points_data["columns"] = columns
+
+            self.points_data["positions"] = self.get_electrode_positions(point)
+
             # break  # Debugging
 
         # Remove the unused columns
-        self.points_signals["signals"] = self.points_signals["signals"][
+        self.points_data["signals"] = self.points_data["signals"][
             :,
             :,
-            : -np.sum(np.sum(np.abs(self.points_signals["signals"]), axis=(0, 1)) == 0),
-        ]  # Do not touch
+            : -np.sum(
+                np.sum(np.abs(self.points_data["signals"]), axis=(0, 1)) == 0
+            ),  # Do not touch
+        ]
 
     __call__ = parse_study
 
@@ -228,7 +238,7 @@ class Carser:
 
             if has_mcc_dx and has_pole_a:
                 raise ValueError(
-                    "MCC-DX and 20 Pole A connectors present in the same point export."
+                    "MCC-DX and 20 Pole A connectors both present in the same point export."
                 )
 
         if not (has_pole_a or has_mcc_dx):
@@ -378,8 +388,102 @@ class Carser:
 
         return signal_data, columns
 
-    def get_electrode_positions(self, point_xml_root: ET.Element):
-        pass
+    def get_electrode_positions(self, point: ET.Element):
+        # Get the path to the point export file
+        point_export_filename = point.get("File_Name")
+        if point_export_filename is None:
+            raise ValueError("Attribute 'File_Name' not found in the XML file")
+        point_export_path = os.path.join(
+            self.study_dir,
+            point_export_filename,
+        )
+        point_export_tree = ET.parse(point_export_path)
+        point_export_root = point_export_tree.getroot()
+
+        # Check which connectors were used
+        connectors = point_export_root.find("Positions").findall("Connector")  # type: ignore
+        has_pole_a = False
+        has_mcc_dx = False
+        positions_file = None
+        n_electrodes = 0
+        n_spline = 0
+        if not (has_pole_a or has_mcc_dx):
+            for connector in connectors:
+                pola_a_positions_file = connector.get("MAGNETIC_20_POLE_A_CONNECTOR")
+                mcc_dx_positions_file = connector.get("MCC_DX_CONNECTOR")
+                if pola_a_positions_file is not None:
+                    has_pole_a = True
+                    if (
+                        "Eleclectrode_Positions" in pola_a_positions_file
+                        and "OnAnnotation" not in pola_a_positions_file
+                    ):
+                        positions_file = connector.get("MAGNETIC_20_POLE_A_CONNECTOR")
+                        n_electrodes = 20
+                        n_spline = 5
+
+                if mcc_dx_positions_file is not None:
+                    has_mcc_dx = True
+                    if (
+                        "Eleclectrode_Positions" in mcc_dx_positions_file
+                        and "OnAnnotation" not in mcc_dx_positions_file
+                    ):
+                        positions_file = connector.get("MCC_DX_CONNECTOR")
+                        n_electrodes = 40
+                        n_spline = 8
+
+            if has_mcc_dx and has_pole_a:
+                raise ValueError(
+                    "MCC-DX and 20 Pole A connectors both present in the same point export."
+                )
+
+        if not (has_pole_a or has_mcc_dx):
+            print(
+                f"Skipping point {point.get('ID')} of patient {self.patient} due to no connectors."
+            )
+            return
+
+        if positions_file is None or n_electrodes == 0 or n_spline == 0:
+            print(
+                f"Skipping point {point.get('ID')} of patient {self.patient} due to no electrode positions file."
+            )
+            return
+
+        # Get the positions file
+        positions_file_path = os.path.join(
+            self.study_dir,
+            positions_file,
+        )
+        # Get the electrode positions
+        positions_df = pd.read_csv(
+            positions_file_path,
+            skiprows=1,
+            sep="\t",
+            skipinitialspace=True,
+            index_col=False,
+            usecols=["Electrode#", "Time", "X", "Y", "Z"],
+        )
+
+        index = (np.argwhere(np.diff(positions_df["Electrode#"]) == -1) + 1)[0][0]
+        positions_df = positions_df.iloc[index:, :]
+        positions = positions_df.loc[:, ["X", "Y", "Z"]].to_numpy(dtype=np.float32)
+        positions = positions.reshape([n_electrodes, -1, 3]).transpose(
+            1, 0, 2
+        )  # shape = [n_samples, n_electrodes, n_coordinates]
+        positions = positions.reshape(
+            [-1, n_spline, n_electrodes // n_spline, 3]
+        )  # shape = [n_samples, n_spline, n_electrode_per_spline, n_coordinates]
+
+        positions_of_dipoles = ((positions + np.roll(positions, shift=-1, axis=2)) / 2)[
+            :, :, :-1, :
+        ]  # shape = [n_samples, n_spline, n_dipoles_per_spline, n_coordinates]
+        positions_of_dipoles = positions_of_dipoles.reshape(
+            -1, n_spline * positions_of_dipoles.shape[2], 3
+        )  # shape = [n_samples, n_dipoles, n_coordinates]
+        positions_of_dipoles = positions_of_dipoles.transpose(
+            1, 2, 0
+        )  # shape = [n_dipoles, n_coordinates, n_samples]
+
+        electrodes = positions_df.loc[:, "Electrode#"].to_numpy(dtype=np.int32)
 
     def get_mesh(self, mesh_file: str) -> dict[str, list[tuple]]:
         """
@@ -481,10 +585,10 @@ if __name__ == "__main__":
                 oned_as="column",
             )
             sio.savemat(
-                os.path.join(out_dir, "points_signals.mat"),
-                carser.points_signals,
+                os.path.join(out_dir, "LA_points_data.mat"),
+                carser.points_data,
                 oned_as="column",
             )
         except Exception as e:
             logging.error(f"Error processing patient {patient}: {e}", exc_info=True)
-        # break  # Debugging
+        break  # Debugging
