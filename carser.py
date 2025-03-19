@@ -75,20 +75,45 @@ class Carser:
         self.LA_mesh = self.get_mesh(self.LA_mesh_file)
         # Get the points from the LA map
         self.LA_points = self.get_points(self.LA_map)
-        # Get the data from the points
-        self.points_signals["signals"] = []
-        self.points_signals["points_IDs"] = []
+        if len(self.LA_points) > 4500:
+            print(f"Skipping patient {self.patient} due to too many points.")
+            with open("skipped_patients.txt", "a") as file:
+                file.write(f"Skipping patient {self.patient} due to too many points.\n")
+            return
+
+        # Discover the number of valid points
+        valid_points = 0
         for point in self.LA_points:
-            logger.debug(
-                f"Processing point {point.get('ID')} of patient {self.patient}"
-            )
+            _, flag = self.get_signals(point, dry_run=True)
+            if flag == ["valid"]:
+                valid_points += 1
+
+        # Get the data from the points
+        self.points_signals["signals"] = np.zeros(
+            [valid_points, 2500, 12 + 3 + 40], dtype=np.float64
+        )  # Overestimated number of columns, will be shrinked later
+        self.points_signals["points_IDs"] = 1 * np.ones([valid_points], dtype=np.int32)
+        for p, point in enumerate(self.LA_points):
+            point_ID = point.get("ID")
+            if point_ID is None:
+                raise ValueError("Attribute 'ID' not found in the XML file")
+
+            logger.debug(f"Processing point {point_ID} of patient {self.patient}")
+
             signals, columns = self.get_signals(point)
             if signals is None:
                 continue
-            self.points_signals["signals"].append(signals)
-            self.points_signals["points_IDs"].append(int(point.get("ID")))  # type: ignore
+            self.points_signals["signals"][p, :, : signals.shape[1]] = signals
+            self.points_signals["points_IDs"][p] = int(point_ID)
             self.points_signals["columns"] = columns
-            # return  # Debugging
+            # break  # Debugging
+
+        # Remove the unused columns
+        self.points_signals["signals"] = self.points_signals["signals"][
+            :,
+            :,
+            : -np.sum(np.sum(np.abs(self.points_signals["signals"]), axis=(0, 1)) == 0),
+        ]  # Do not touch
 
     __call__ = parse_study
 
@@ -174,7 +199,7 @@ class Carser:
         return points_list
 
     def get_signals(
-        self, point: ET.Element
+        self, point: ET.Element, dry_run: bool = False
     ) -> tuple[np.ndarray | None, list[str] | None]:
         # Get the path to the point export file
         point_export_filename = point.get("File_Name")
@@ -209,6 +234,9 @@ class Carser:
                 f"Skipping point {point.get('ID')} of patient {self.patient} due to no connectors."
             )
             return (None, None)
+
+        if dry_run:
+            return (None, ["valid"])
 
         # Get the ECG file
         ECG_file = point_export_root.find("ECG")
@@ -413,7 +441,7 @@ class Carser:
 if __name__ == "__main__":
     data_dir = "/workspace/raw_data/CARTO_DAVIDE/"
 
-    for patient in os.listdir(data_dir):
+    for patient in sorted(os.listdir(data_dir)):
         if not os.path.isdir(os.path.join(data_dir, patient)):
             continue
         if patient == "to-process":
@@ -457,4 +485,4 @@ if __name__ == "__main__":
             )
         except Exception as e:
             logging.error(f"Error processing patient {patient}: {e}", exc_info=True)
-        # break  # Debugging
+        break  # Debugging
