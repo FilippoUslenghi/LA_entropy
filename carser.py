@@ -38,6 +38,9 @@ class Carser:
         self.LA_mesh = None
         self.LA_points = []
         self.points_data = {}
+        self.skipped_points = 0
+        self.points_with_missing_spline = 0
+        self.catheter = None
 
     def parse_study(self) -> None:
         """
@@ -77,13 +80,6 @@ class Carser:
 
         # Get the points from the LA map
         self.LA_points = self.get_points(self.LA_map)
-        if len(self.LA_points) > 4000:
-            print(f"Processing patient {self.patient} with high number of points.")
-            with open("skipped_patients.txt", "a") as file:
-                file.write(
-                    f"Processing patient {self.patient} with high number of points.\n"
-                )
-            # return # Debugging
 
         # Discover the number of valid points to preallocate the signals array
         valid_points = 0
@@ -92,29 +88,50 @@ class Carser:
             if flag == ["valid"]:
                 valid_points += 1
 
-        # Get the signals from the points
+        # Preallocate the signals array
         self.points_data["signals"] = np.zeros(
             [valid_points, 2500, 12 + 3 + 40], dtype=np.float32
         )  # Overestimated number of columns, will be shrinked later
         self.points_data["points_IDs"] = 1 * np.ones([valid_points], dtype=np.int32)
+
+        # Preallocate the positions array
+        self.points_data["positions"] = np.zeros(
+            [valid_points, (40 if self.catheter == "MCC_DX" else 15), 3, 152]
+        )
+        # self.points_data["electrodes"] = np.ndarray([valid_points], dtype='<U17')
+        self.points_data["electrodes"] = []
+
         for i, point in enumerate(self.LA_points):
+
             point_ID = point.get("ID")
             if point_ID is None:
                 raise ValueError("Attribute 'ID' not found in the XML file")
 
             logger.debug(f"Processing point {point_ID} of patient {self.patient}")
 
-            signals, columns = self.get_signals(point)
-            if signals is None:
-                continue
             # Get the signals from the point
-            # self.points_data["signals"][i, :, : signals.shape[1]] = signals
-            # Get the point ID
-            # self.points_data["points_IDs"][i] = int(point_ID)
-            # Get the column names
-            # self.points_data["columns"] = columns
+            signals, columns = self.get_signals(point)
+            # Get the electrode positions from the point
+            positions, electrodes = self.get_electrode_positions(point)
 
-            self.points_data["positions"] = self.get_electrode_positions(point)
+            # Check if the signals, positions, or electrodes are None
+            if signals is None or positions is None or electrodes is None:
+                i -= 1
+                continue
+
+            # Store the signals in the signals array
+            self.points_data["signals"][i, :, : signals.shape[1]] = signals
+            # Get the point ID
+            self.points_data["points_IDs"][i] = int(point_ID)
+            # Get the column names
+            self.points_data["columns"] = columns
+
+            # Store the electrode positions in the positions array
+            self.points_data["positions"][
+                i, : positions.shape[0], : positions.shape[1], : positions.shape[2]
+            ] = positions
+            self.points_data["electrodes"].append(electrodes)
+            # self.points_data["electrodes"][i] = electrodes
 
             # break  # Debugging
 
@@ -232,9 +249,11 @@ class Carser:
             for connector in connectors:
                 if connector.get("MAGNETIC_20_POLE_A_CONNECTOR") is not None:
                     has_pole_a = True
+                    self.catheter = "20_POLE_A"
 
                 if connector.get("MCC_DX_CONNECTOR") is not None:
                     has_mcc_dx = True
+                    self.catheter = "MCC_DX"
 
             if has_mcc_dx and has_pole_a:
                 raise ValueError(
@@ -388,7 +407,9 @@ class Carser:
 
         return signal_data, columns
 
-    def get_electrode_positions(self, point: ET.Element):
+    def get_electrode_positions(
+        self, point: ET.Element
+    ) -> tuple[np.ndarray | None, list[str] | None]:
         # Get the path to the point export file
         point_export_filename = point.get("File_Name")
         if point_export_filename is None:
@@ -407,6 +428,8 @@ class Carser:
         positions_file = None
         n_electrodes = 0
         n_spline = 0
+        special_value = 0
+        electrodes = ["None"]
         if not (has_pole_a or has_mcc_dx):
             for connector in connectors:
                 pola_a_positions_file = connector.get("MAGNETIC_20_POLE_A_CONNECTOR")
@@ -420,6 +443,24 @@ class Carser:
                         positions_file = connector.get("MAGNETIC_20_POLE_A_CONNECTOR")
                         n_electrodes = 20
                         n_spline = 5
+                        special_value = -1
+                        electrodes = [
+                            "20A_1-2",
+                            "20A_2-3",
+                            "20A_3-4",
+                            "20A_5-6",
+                            "20A_6-7",
+                            "20A_7-8",
+                            "20A_9-10",
+                            "20A_10-11",
+                            "20A_11-12",
+                            "20A_13-14",
+                            "20A_14-15",
+                            "20A_15-16",
+                            "20A_17-18",
+                            "20A_18-19",
+                            "20A_19-20",
+                        ]
 
                 if mcc_dx_positions_file is not None:
                     has_mcc_dx = True
@@ -428,8 +469,51 @@ class Carser:
                         and "OnAnnotation" not in mcc_dx_positions_file
                     ):
                         positions_file = connector.get("MCC_DX_CONNECTOR")
-                        n_electrodes = 40
+                        n_electrodes = 48
                         n_spline = 8
+                        special_value = -2
+                        electrodes = [
+                            "MCC_Dx_BiPolar_1",
+                            "MCC_Dx_BiPolar_2",
+                            "MCC_Dx_BiPolar_3",
+                            "MCC_Dx_BiPolar_4",
+                            "MCC_Dx_BiPolar_5",
+                            "MCC_Dx_BiPolar_6",
+                            "MCC_Dx_BiPolar_7",
+                            "MCC_Dx_BiPolar_8",
+                            "MCC_Dx_BiPolar_9",
+                            "MCC_Dx_BiPolar_10",
+                            "MCC_Dx_BiPolar_11",
+                            "MCC_Dx_BiPolar_12",
+                            "MCC_Dx_BiPolar_13",
+                            "MCC_Dx_BiPolar_14",
+                            "MCC_Dx_BiPolar_15",
+                            "MCC_Dx_BiPolar_16",
+                            "MCC_Dx_BiPolar_17",
+                            "MCC_Dx_BiPolar_18",
+                            "MCC_Dx_BiPolar_19",
+                            "MCC_Dx_BiPolar_20",
+                            "MCC_Dx_BiPolar_21",
+                            "MCC_Dx_BiPolar_22",
+                            "MCC_Dx_BiPolar_23",
+                            "MCC_Dx_BiPolar_24",
+                            "MCC_Dx_BiPolar_25",
+                            "MCC_Dx_BiPolar_26",
+                            "MCC_Dx_BiPolar_27",
+                            "MCC_Dx_BiPolar_28",
+                            "MCC_Dx_BiPolar_29",
+                            "MCC_Dx_BiPolar_30",
+                            "MCC_Dx_BiPolar_31",
+                            "MCC_Dx_BiPolar_32",
+                            "MCC_Dx_BiPolar_33",
+                            "MCC_Dx_BiPolar_34",
+                            "MCC_Dx_BiPolar_35",
+                            "MCC_Dx_BiPolar_36",
+                            "MCC_Dx_BiPolar_37",
+                            "MCC_Dx_BiPolar_38",
+                            "MCC_Dx_BiPolar_39",
+                            "MCC_Dx_BiPolar_40",
+                        ]
 
             if has_mcc_dx and has_pole_a:
                 raise ValueError(
@@ -440,13 +524,20 @@ class Carser:
             print(
                 f"Skipping point {point.get('ID')} of patient {self.patient} due to no connectors."
             )
-            return
+            self.skipped_points += 1
+            return None, None
 
-        if positions_file is None or n_electrodes == 0 or n_spline == 0:
-            print(
-                f"Skipping point {point.get('ID')} of patient {self.patient} due to no electrode positions file."
+        if (
+            positions_file is None
+            or n_electrodes == 0
+            or n_spline == 0
+            or special_value == 0
+        ):
+            logging.error(
+                f"Skipping point {point.get('ID')} of patient {self.patient} due to no positions file."
             )
-            return
+            self.skipped_points += 1
+            return None, None
 
         # Get the positions file
         positions_file_path = os.path.join(
@@ -460,11 +551,35 @@ class Carser:
             sep="\t",
             skipinitialspace=True,
             index_col=False,
-            usecols=["Electrode#", "Time", "X", "Y", "Z"],
         )
-
-        index = (np.argwhere(np.diff(positions_df["Electrode#"]) == -1) + 1)[0][0]
+        # Remove the first electrodes of the connectors
+        try:
+            try:
+                index = (
+                    np.argwhere(np.diff(positions_df["Electrode#"]) == special_value)
+                    + 1
+                ).item()
+            except:
+                index = (
+                    np.argwhere(np.diff(positions_df["Electrode#"]) == -1) + 1
+                ).item()
+        except:
+            logging.error(
+                f"Skipping point {point.get('ID')} of patient {self.patient} due to no spline."
+            )
+            self.skipped_points += 1
+            return None, None
         positions_df = positions_df.iloc[index:, :]
+
+        if len(positions_df.loc[:, "X"]) % n_electrodes != 0:
+            logging.error(
+                f"Skipping point {point.get('ID')} of patient {self.patient} due to missing of some spline."
+            )
+            self.skipped_points += 1
+            self.points_with_missing_spline += 1
+            return None, None
+
+        # Get the positions of the dipoles
         positions = positions_df.loc[:, ["X", "Y", "Z"]].to_numpy(dtype=np.float32)
         positions = positions.reshape([n_electrodes, -1, 3]).transpose(
             1, 0, 2
@@ -483,9 +598,9 @@ class Carser:
             1, 2, 0
         )  # shape = [n_dipoles, n_coordinates, n_samples]
 
-        return positions_of_dipoles  # TODO: check that in the file there are all the splines
+        # electrodes = positions_df.loc[:, "Electrode#"].to_numpy(dtype=np.int32)
 
-        electrodes = positions_df.loc[:, "Electrode#"].to_numpy(dtype=np.int32)
+        return positions_of_dipoles, electrodes
 
     def get_mesh(self, mesh_file: str) -> dict[str, list[tuple]]:
         """
@@ -581,6 +696,10 @@ if __name__ == "__main__":
         logging.debug(f"Processing patient {patient}")
         try:
             carser()
+            with open("skipped_points.log", "a") as file:
+                file.write(
+                    f"Patient {patient} skipped {(carser.skipped_points/len(carser.LA_points)*100):.1f}% of {len(carser.LA_points)} points. Remaining {len(carser.LA_points)-carser.skipped_points} points.\n Identified {carser.points_with_missing_spline} points with missing splines\n"
+                )
             sio.savemat(
                 os.path.join(out_dir, "LA_mesh.mat"),
                 carser.LA_mesh,
@@ -593,4 +712,4 @@ if __name__ == "__main__":
             )
         except Exception as e:
             logging.error(f"Error processing patient {patient}: {e}", exc_info=True)
-        break  # Debugging
+        # break  # Debugging
