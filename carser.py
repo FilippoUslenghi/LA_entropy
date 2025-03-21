@@ -93,6 +93,7 @@ class Carser:
             [valid_points, 2500, 12 + 3 + 40], dtype=np.float32
         )  # Overestimated number of columns, will be shrinked later
         self.points_data["points_IDs"] = 1 * np.ones([valid_points], dtype=np.int32)
+        # TODO: controll this point_IDS pre allocation
 
         # Preallocate the positions array
         self.points_data["positions"] = np.zeros(
@@ -107,7 +108,7 @@ class Carser:
             if point_ID is None:
                 raise ValueError("Attribute 'ID' not found in the XML file")
 
-            logger.debug(f"Processing point {point_ID} of patient {self.patient}")
+            # logger.debug(f"Processing point {point_ID} of patient {self.patient}")
 
             # Get the signals from the point
             signals, columns = self.get_signals(point)
@@ -131,6 +132,7 @@ class Carser:
                 i, : positions.shape[0], : positions.shape[1], : positions.shape[2]
             ] = positions
             self.points_data["electrodes"].append(electrodes)
+            # TODO: pass the electrodes in a smarter way
             # self.points_data["electrodes"][i] = electrodes
 
             # break  # Debugging
