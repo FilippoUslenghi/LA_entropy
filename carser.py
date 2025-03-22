@@ -41,6 +41,65 @@ class Carser:
         self.skipped_points = 0
         self.points_with_missing_spline = 0
         self.catheter = None
+        self.pole_a_dipoles = [
+            "20A_1-2",
+            "20A_2-3",
+            "20A_3-4",
+            "20A_5-6",
+            "20A_6-7",
+            "20A_7-8",
+            "20A_9-10",
+            "20A_10-11",
+            "20A_11-12",
+            "20A_13-14",
+            "20A_14-15",
+            "20A_15-16",
+            "20A_17-18",
+            "20A_18-19",
+            "20A_19-20",
+        ]
+        self.mcc_dx_dipoles = [
+            "MCC_Dx_BiPolar_1",
+            "MCC_Dx_BiPolar_2",
+            "MCC_Dx_BiPolar_3",
+            "MCC_Dx_BiPolar_4",
+            "MCC_Dx_BiPolar_5",
+            "MCC_Dx_BiPolar_6",
+            "MCC_Dx_BiPolar_7",
+            "MCC_Dx_BiPolar_8",
+            "MCC_Dx_BiPolar_9",
+            "MCC_Dx_BiPolar_10",
+            "MCC_Dx_BiPolar_11",
+            "MCC_Dx_BiPolar_12",
+            "MCC_Dx_BiPolar_13",
+            "MCC_Dx_BiPolar_14",
+            "MCC_Dx_BiPolar_15",
+            "MCC_Dx_BiPolar_16",
+            "MCC_Dx_BiPolar_17",
+            "MCC_Dx_BiPolar_18",
+            "MCC_Dx_BiPolar_19",
+            "MCC_Dx_BiPolar_20",
+            "MCC_Dx_BiPolar_21",
+            "MCC_Dx_BiPolar_22",
+            "MCC_Dx_BiPolar_23",
+            "MCC_Dx_BiPolar_24",
+            "MCC_Dx_BiPolar_25",
+            "MCC_Dx_BiPolar_26",
+            "MCC_Dx_BiPolar_27",
+            "MCC_Dx_BiPolar_28",
+            "MCC_Dx_BiPolar_29",
+            "MCC_Dx_BiPolar_30",
+            "MCC_Dx_BiPolar_31",
+            "MCC_Dx_BiPolar_32",
+            "MCC_Dx_BiPolar_33",
+            "MCC_Dx_BiPolar_34",
+            "MCC_Dx_BiPolar_35",
+            "MCC_Dx_BiPolar_36",
+            "MCC_Dx_BiPolar_37",
+            "MCC_Dx_BiPolar_38",
+            "MCC_Dx_BiPolar_39",
+            "MCC_Dx_BiPolar_40",
+        ]
 
     def parse_study(self) -> None:
         """
@@ -89,11 +148,13 @@ class Carser:
                 valid_points += 1
 
         # Preallocate the signals array
+        self.points_data["points_IDs"] = np.zeros([valid_points], dtype=np.int32)
+
         self.points_data["signals"] = np.zeros(
             [valid_points, 2500, 12 + 3 + 40], dtype=np.float32
         )  # Overestimated number of columns, will be shrinked later
-        self.points_data["points_IDs"] = 1 * np.ones([valid_points], dtype=np.int32)
-        # TODO: controll this point_IDS pre allocation
+
+        self.points_data["columns"] = []
 
         # Preallocate the positions array
         self.points_data["positions"] = np.zeros(
@@ -102,8 +163,8 @@ class Carser:
         # self.points_data["electrodes"] = np.ndarray([valid_points], dtype='<U17')
         self.points_data["electrodes"] = []
 
+        j = 0
         for i, point in enumerate(self.LA_points):
-
             point_ID = point.get("ID")
             if point_ID is None:
                 raise ValueError("Attribute 'ID' not found in the XML file")
@@ -116,35 +177,44 @@ class Carser:
             positions, electrodes = self.get_electrode_positions(point)
 
             # Check if the signals, positions, or electrodes are None
-            if signals is None or positions is None or electrodes is None:
-                i -= 1
+            if (
+                signals is None
+                or columns is None
+                or positions is None
+                or electrodes is None
+            ):
+                j -= 1
                 continue
 
-            # Store the signals in the signals array
-            self.points_data["signals"][i, :, : signals.shape[1]] = signals
             # Get the point ID
-            self.points_data["points_IDs"][i] = int(point_ID)
+            self.points_data["points_IDs"][i + j] = int(point_ID)
+            # Store the signals in the signals array
+            self.points_data["signals"][i + j, :, : signals.shape[1]] = signals
             # Get the column names
             self.points_data["columns"] = columns
 
             # Store the electrode positions in the positions array
             self.points_data["positions"][
-                i, : positions.shape[0], : positions.shape[1], : positions.shape[2]
+                i + j, : positions.shape[0], : positions.shape[1], : positions.shape[2]
             ] = positions
-            self.points_data["electrodes"].append(electrodes)
-            # TODO: pass the electrodes in a smarter way
-            # self.points_data["electrodes"][i] = electrodes
+            if self.catheter == "20_POLE_A":
+                self.points_data["electrodes"] = self.pole_a_dipoles
+            elif self.catheter == "MCC_DX":
+                self.points_data["electrodes"] = self.mcc_dx_dipoles
 
             # break  # Debugging
 
-        # Remove the unused columns
+        # Remove the empty preallocated space
+        index = np.argwhere(self.points_data["points_IDs"] == 0)[0].item()
+        self.points_data["points_IDs"] = self.points_data["points_IDs"][:index]
         self.points_data["signals"] = self.points_data["signals"][
-            :,
+            :index,
             :,
             : -np.sum(
                 np.sum(np.abs(self.points_data["signals"]), axis=(0, 1)) == 0
             ),  # Do not touch
         ]
+        self.points_data["positions"] = self.points_data["positions"][:index, :, :, :]
 
     __call__ = parse_study
 
@@ -400,13 +470,6 @@ class Carser:
         signal_data = signal_data * gain
         columns = [column.split("(")[0] for column in columns]
 
-        # data_dict = np.empty([1 + 2500, len(columns)], dtype=object)
-        # data_dict[0, :] = columns
-        # data_dict[1:, :] = signal_data
-        # for i, column in enumerate(columns, start=1):
-        #     column = column.split("(")[0]
-        #     data_dict[column] = signal_data[:, i]
-
         return signal_data, columns
 
     def get_electrode_positions(
@@ -446,23 +509,7 @@ class Carser:
                         n_electrodes = 20
                         n_spline = 5
                         special_value = -1
-                        electrodes = [
-                            "20A_1-2",
-                            "20A_2-3",
-                            "20A_3-4",
-                            "20A_5-6",
-                            "20A_6-7",
-                            "20A_7-8",
-                            "20A_9-10",
-                            "20A_10-11",
-                            "20A_11-12",
-                            "20A_13-14",
-                            "20A_14-15",
-                            "20A_15-16",
-                            "20A_17-18",
-                            "20A_18-19",
-                            "20A_19-20",
-                        ]
+                        electrodes = self.pole_a_dipoles
 
                 if mcc_dx_positions_file is not None:
                     has_mcc_dx = True
@@ -474,48 +521,7 @@ class Carser:
                         n_electrodes = 48
                         n_spline = 8
                         special_value = -2
-                        electrodes = [
-                            "MCC_Dx_BiPolar_1",
-                            "MCC_Dx_BiPolar_2",
-                            "MCC_Dx_BiPolar_3",
-                            "MCC_Dx_BiPolar_4",
-                            "MCC_Dx_BiPolar_5",
-                            "MCC_Dx_BiPolar_6",
-                            "MCC_Dx_BiPolar_7",
-                            "MCC_Dx_BiPolar_8",
-                            "MCC_Dx_BiPolar_9",
-                            "MCC_Dx_BiPolar_10",
-                            "MCC_Dx_BiPolar_11",
-                            "MCC_Dx_BiPolar_12",
-                            "MCC_Dx_BiPolar_13",
-                            "MCC_Dx_BiPolar_14",
-                            "MCC_Dx_BiPolar_15",
-                            "MCC_Dx_BiPolar_16",
-                            "MCC_Dx_BiPolar_17",
-                            "MCC_Dx_BiPolar_18",
-                            "MCC_Dx_BiPolar_19",
-                            "MCC_Dx_BiPolar_20",
-                            "MCC_Dx_BiPolar_21",
-                            "MCC_Dx_BiPolar_22",
-                            "MCC_Dx_BiPolar_23",
-                            "MCC_Dx_BiPolar_24",
-                            "MCC_Dx_BiPolar_25",
-                            "MCC_Dx_BiPolar_26",
-                            "MCC_Dx_BiPolar_27",
-                            "MCC_Dx_BiPolar_28",
-                            "MCC_Dx_BiPolar_29",
-                            "MCC_Dx_BiPolar_30",
-                            "MCC_Dx_BiPolar_31",
-                            "MCC_Dx_BiPolar_32",
-                            "MCC_Dx_BiPolar_33",
-                            "MCC_Dx_BiPolar_34",
-                            "MCC_Dx_BiPolar_35",
-                            "MCC_Dx_BiPolar_36",
-                            "MCC_Dx_BiPolar_37",
-                            "MCC_Dx_BiPolar_38",
-                            "MCC_Dx_BiPolar_39",
-                            "MCC_Dx_BiPolar_40",
-                        ]
+                        electrodes = self.mcc_dx_dipoles
 
             if has_mcc_dx and has_pole_a:
                 raise ValueError(
@@ -695,10 +701,10 @@ if __name__ == "__main__":
         ][0]
         study_path = os.path.join(data_dir, patient, subfolder, study_xml)
         carser = Carser(study_path)
-        logging.debug(f"Processing patient {patient}")
+        # logging.debug(f"Processing patient {patient}")
         try:
             carser()
-            with open("skipped_points.log", "a") as file:
+            with open("skipped_points.log", "at") as file:
                 file.write(
                     f"Patient {patient} skipped {(carser.skipped_points/len(carser.LA_points)*100):.1f}% of {len(carser.LA_points)} points. Remaining {len(carser.LA_points)-carser.skipped_points} points.\n Identified {carser.points_with_missing_spline} points with missing splines\n"
                 )
