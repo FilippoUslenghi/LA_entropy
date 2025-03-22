@@ -442,8 +442,8 @@ class Carser:
                     skipinitialspace=True,
                     usecols=columns,
                 )
-                .sort_values(axis=0, by=columns)
-                .to_numpy(dtype=np.float64)
+                .reindex(columns, axis=1)
+                .to_numpy(dtype=np.float32)
             )
         except:
             columns = pole_columns + ECG_columns
@@ -456,7 +456,7 @@ class Carser:
                     usecols=columns,
                 )
                 .reindex(columns, axis=1)
-                .to_numpy(dtype=np.float64)
+                .to_numpy(dtype=np.float32)
             )
 
         # Get the gain value
@@ -662,6 +662,7 @@ class Carser:
                 )
                 line = file.readline()
 
+        mesh["MapName"] = self.LA_map_name
         mesh["vertices"] = vertices
         mesh["triangles"] = triangles
         mesh["GroupID"] = GroupID
