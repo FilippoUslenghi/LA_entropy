@@ -143,7 +143,7 @@ class Carser:
         # Discover the number of valid points to preallocate the signals array
         valid_points = 0
         for point in self.LA_points:
-            _, flag = self.get_signals(point, dry_run=True)
+            _, flag, _ = self.get_signals(point, dry_run=True)
             if flag == ["valid"]:
                 valid_points += 1
 
@@ -172,7 +172,7 @@ class Carser:
             # logger.debug(f"Processing point {point_ID} of patient {self.patient}")
 
             # Get the signals from the point
-            signals, columns = self.get_signals(point)
+            signals, columns, reference_channel = self.get_signals(point)
             # Get the electrode positions from the point
             positions, electrodes = self.get_electrode_positions(point)
 
@@ -182,6 +182,7 @@ class Carser:
                 or columns is None
                 or positions is None
                 or electrodes is None
+                or reference_channel is None
             ):
                 j -= 1
                 continue
@@ -192,6 +193,8 @@ class Carser:
             self.points_data["signals"][i + j, :, : signals.shape[1]] = signals
             # Get the column names
             self.points_data["columns"] = columns
+            # Store the reference channel
+            self.points_data["reference_channel"] = reference_channel
 
             # Store the electrode positions in the positions array
             self.points_data["positions"][
@@ -301,7 +304,7 @@ class Carser:
 
     def get_signals(
         self, point: ET.Element, dry_run: bool = False
-    ) -> tuple[np.ndarray | None, list[str] | None]:
+    ) -> tuple[np.ndarray | None, list[str] | None, str | None]:
         # Get the path to the point export file
         point_export_filename = point.get("File_Name")
         if point_export_filename is None:
@@ -336,22 +339,26 @@ class Carser:
             print(
                 f"Skipping point {point.get('ID')} of patient {self.patient} due to no connectors."
             )
-            return (None, None)
+            return (None, None, None)
 
         if dry_run:
-            return (None, ["valid"])
+            return (None, ["valid"], None)
 
         # Get the ECG file
-        ECG_file = point_export_root.find("ECG")
-        if ECG_file is None:
+        ECG_xml_tag = point_export_root.find("ECG")
+        if ECG_xml_tag is None:
             raise ValueError("Tag 'ECG' not found in the XML file")
-        ECG_file_name = ECG_file.get("FileName")
+        ECG_file_name = ECG_xml_tag.get("FileName")
         if ECG_file_name is None:
             raise ValueError("Attribute 'FileName' not found in the XML file")
         ECG_file_path = os.path.join(
             self.study_dir,
             ECG_file_name,
         )
+
+        reference_channel = ECG_xml_tag.get("ReferenceChannel")
+        if reference_channel is None:
+            raise ValueError("Attribute 'ReferenceChannel' not found in the XML file")
 
         # Get the ECG data
         ECG_columns = [
@@ -470,7 +477,7 @@ class Carser:
         signal_data = signal_data * gain
         columns = [column.split("(")[0] for column in columns]
 
-        return signal_data, columns
+        return signal_data, columns, reference_channel
 
     def get_electrode_positions(
         self, point: ET.Element
@@ -579,13 +586,25 @@ class Carser:
             return None, None
         positions_df = positions_df.iloc[index:, :]
 
-        if len(positions_df.loc[:, "X"]) % n_electrodes != 0:
+        # incresed_counter = False
+        # if len(positions_df.loc[:, "X"]) % n_electrodes != 0:
+        #     logging.error(
+        #         f"Skipping point {point.get('ID')} of patient {self.patient} due to missing of some spline."
+        #     )
+        #     self.skipped_points += 1
+        #     self.points_with_missing_spline += 1
+        #     incresed_counter = True
+
+        # TODO: why patient 103 has fewer skipped points with this check?
+        max_time_window = len(positions_df.loc[:, "Time"].unique())
+        if n_electrodes * max_time_window != positions_df.shape[0]:
             logging.error(
-                f"Skipping point {point.get('ID')} of patient {self.patient} due to missing of some spline."
+                f"Skipping point {point.get('ID')} of patient {self.patient} due to missing of some timestamps."
             )
             self.skipped_points += 1
             self.points_with_missing_spline += 1
             return None, None
+        
 
         # Get the positions of the dipoles
         positions = positions_df.loc[:, ["X", "Y", "Z"]].to_numpy(dtype=np.float32)
@@ -662,7 +681,6 @@ class Carser:
                 )
                 line = file.readline()
 
-        mesh["MapName"] = self.LA_map_name
         mesh["vertices"] = vertices
         mesh["triangles"] = triangles
         mesh["GroupID"] = GroupID
@@ -707,7 +725,7 @@ if __name__ == "__main__":
             carser()
             with open("skipped_points.log", "at") as file:
                 file.write(
-                    f"Patient {patient} skipped {(carser.skipped_points/len(carser.LA_points)*100):.1f}% of {len(carser.LA_points)} points. Remaining {len(carser.LA_points)-carser.skipped_points} points.\n Identified {carser.points_with_missing_spline} points with missing splines\n"
+                    f"Patient {patient} skipped {(carser.skipped_points/len(carser.LA_points)*100):.1f}% of {len(carser.LA_points)} points. Remaining {len(carser.LA_points)-carser.skipped_points} points.\n Identified {carser.points_with_missing_spline} points with missing splines ({(carser.points_with_missing_spline/len(carser.LA_points)*100):.1f}%). \n"
                 )
             sio.savemat(
                 os.path.join(out_dir, "LA_mesh.mat"),
@@ -717,6 +735,11 @@ if __name__ == "__main__":
             sio.savemat(
                 os.path.join(out_dir, "LA_points_data.mat"),
                 carser.points_data,
+                oned_as="column",
+            )
+            sio.savemat(
+                os.path.join(out_dir, "LA_info.mat"),
+                {"patient_ID": patient, "map_name": carser.LA_map_name},
                 oned_as="column",
             )
         except Exception as e:
