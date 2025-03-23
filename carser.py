@@ -586,25 +586,15 @@ class Carser:
             return None, None
         positions_df = positions_df.iloc[index:, :]
 
-        # incresed_counter = False
-        # if len(positions_df.loc[:, "X"]) % n_electrodes != 0:
-        #     logging.error(
-        #         f"Skipping point {point.get('ID')} of patient {self.patient} due to missing of some spline."
-        #     )
-        #     self.skipped_points += 1
-        #     self.points_with_missing_spline += 1
-        #     incresed_counter = True
-
-        # TODO: why patient 103 has fewer skipped points with this check?
+        # TODO: Trim the positions and relative signals to the shortest time window
         max_time_window = len(positions_df.loc[:, "Time"].unique())
         if n_electrodes * max_time_window != positions_df.shape[0]:
             logging.error(
-                f"Skipping point {point.get('ID')} of patient {self.patient} due to missing of some timestamps."
+                f"Skipping point {point.get('ID')} of patient {self.patient} due to missing of some timestamps or entire spline."
             )
             self.skipped_points += 1
             self.points_with_missing_spline += 1
             return None, None
-        
 
         # Get the positions of the dipoles
         positions = positions_df.loc[:, ["X", "Y", "Z"]].to_numpy(dtype=np.float32)
