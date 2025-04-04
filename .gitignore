@@ -3,3 +3,5 @@ DB AF Completo 1.ods
 .idea
 raw_data
 processed_data
+.DS_store
+*.asv
