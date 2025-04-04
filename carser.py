@@ -36,6 +36,7 @@ class Carser:
         self.LA_map_name = None
         self.LA_mesh_file = None
         self.LA_mesh = None
+        self.fs = 1000
         self.LA_points = []
         self.points_data = {}
         self.skipped_points = 0
@@ -586,7 +587,7 @@ class Carser:
             return None, None
         positions_df = positions_df.iloc[index:, :]
 
-        # TODO: Trim the positions and relative signals to the shortest time window
+        # TODO ?: Trim the positions and relative signals to the shortest time window
         max_time_window = len(positions_df.loc[:, "Time"].unique())
         if n_electrodes * max_time_window != positions_df.shape[0]:
             logging.error(
@@ -729,7 +730,11 @@ if __name__ == "__main__":
             )
             sio.savemat(
                 os.path.join(out_dir, "LA_info.mat"),
-                {"patient_ID": patient, "map_name": carser.LA_map_name},
+                {
+                    "patient_ID": patient,
+                    "map_name": carser.LA_map_name,
+                    "fs": carser.fs,
+                },
                 oned_as="column",
             )
         except Exception as e:
