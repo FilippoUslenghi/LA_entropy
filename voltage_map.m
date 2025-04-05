@@ -57,6 +57,10 @@ for ipat = 1:length(patient_dirs)
     disp("Reference channel is " + reference_channel)
     reference_signal_index = find(strcmp(columns, reference_channel));
 
+    % Create an empty matrix to store the PTP value and relative
+    % 3D coordinates
+    T = [];
+
     % For each point export
     for pp = 1:length(points_IDs)
         point_ID = points_IDs(pp);
@@ -83,13 +87,14 @@ for ipat = 1:length(patient_dirs)
             % Shift on the left the windows by a certain amount
             windows = windows - 100;
         end
+        % windows = windows(any(windows>1,2), :);
         windows = max(windows,1);
 
         % For each electrode
         for ee = 1:length(electrodes)
             electrode_index = find(strcmp(electrodes{ee}, columns));
             
-            egm_signal = signals(pp,:,electrode_index);
+            egm_signal = signals(pp,:,electrode_index)';
             
             % Extract the windows from the signal
             egm_windows = arrayfun((@(a,b) egm_signal(a:b)), ...
@@ -98,20 +103,25 @@ for ipat = 1:length(patient_dirs)
             % Compute the peak to peak measure of each window
             egm_ptp = cellfun(@(x) peak2peak(x), egm_windows);
 
-            % TODO: find the relative positions of the EGM activations
-            % (tip: compute the mean of the coordinates in each time window)
-            
+            % Get the coordinates of the electrode
+            coordinates = squeeze(positions(pp, ee, :, :))';
+            % Remove trailing 0s
+            coordinates = coordinates(1:find(sum(coordinates, 2), 1, "last"),:);
+            % Linearly interpolate coordinates to the length of the signals
+            coordinates_timestamps = linspace(1, size(signals,2), length(coordinates));
+            coordinates = interp1(coordinates_timestamps, coordinates, ...
+                1:length(signals), "linear");
 
-            break
+            % Window the coordinates
+            coordinates_windows = arrayfun(@(a,b) coordinates(a:b,:), ...
+                windows(:,1), windows(:,2), "Unif", 0);
+            % Compute the mean of the coordinates within the windows
+            mean_coordinates = cellfun((@(x) mean(x,1)), coordinates_windows, "Unif", 0);
+            mean_coordinates = cell2mat(mean_coordinates);
+
+            T = [T; [egm_ptp mean_coordinates]]; %#ok<AGROW>
         end
-
-        % TODO: create a table that associates each positions
-        % to its relative EGM activation
-
-
-        break
     end
-    
     break
 end
 
