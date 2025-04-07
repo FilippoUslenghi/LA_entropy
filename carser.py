@@ -376,7 +376,17 @@ class Carser:
             "aVR(172)",
             "aVF(173)",
         ]
-        CS_columns = ["CS1-CS2(101)", "CS5-CS6(105)", "CS9-CS10(109)"]
+        CS_columns = [
+            "CS1-CS2(101)",
+            "CS2-CS3(102)",
+            "CS3-CS4(103)",
+            "CS4-CS5(104)",
+            "CS5-CS6(105)",
+            "CS6-CS7(106)",
+            "CS7-CS8(107)",
+            "CS8-CS9(108)",
+            "CS9-CS10(109)",
+        ]
         pole_columns = []
         if has_pole_a:
             pole_columns = [
