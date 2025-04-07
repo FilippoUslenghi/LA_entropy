@@ -36,7 +36,7 @@ class Carser:
         self.LA_map_name = None
         self.LA_mesh_file = None
         self.LA_mesh = None
-        self.fs = 1000
+        self.fs = 1000.0
         self.LA_points = []
         self.points_data = {}
         self.skipped_points = 0
