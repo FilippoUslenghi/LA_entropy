@@ -4,3 +4,5 @@ DB AF Completo 1.ods
 raw_data
 processed_data
 *.log
+.DS_store
+*.asv
