@@ -13,7 +13,9 @@
 clc
 clearvars
 
-fs = 1000;
+% Deactivate warning for performance reasons
+warning('off', 'signal:findpeaks:largeMinPeakHeight')
+
 data_dir = "processed_data";
 patient_dirs = dir(data_dir);
 
@@ -31,6 +33,8 @@ for ipat = 1:length(patient_dirs)
     load(strjoin([path_to_data "LA_info.mat"], '/'))
     load(strjoin([path_to_data "LA_mesh.mat"], '/'))
     load(strjoin([path_to_data "LA_points_data.mat"], '/'))
+
+    fs = double(fs);
    
     % Skip the patients with CS pacing
     if contains(map_name, "PACE")
@@ -43,52 +47,87 @@ for ipat = 1:length(patient_dirs)
     electrodes = cellstr(electrodes);
     signals = double(signals);
     
-    % Select reference channel
-    AF = true;
-    if ~contains(map_name, "FA")
+    % Check whether is AF or no
+    if contains(map_name, "FA") || contains(map_name, "AF")
+        AF = true;
+    else
         AF = false;
-        reference_channel = 'CS1-CS2';
     end
     if patient_ID == "100"
         AF = true;
-        reference_channel = 'V5';
     end
 
-    disp("Reference channel is " + reference_channel)
+    reference_channel = 'CS1-CS2';
     reference_signal_index = find(strcmp(columns, reference_channel));
 
-    % Create an empty matrix to store the PTP value and relative
-    % 3D coordinates
-    T = [];
+    ecg_channel = 'V5';
+    ecg_signal_index = find(strcmp(columns, ecg_channel));
+
+    % Create empty matrices to store the PTP value and relative
+    % coordinates
+    coordinates = [];
+    voltages = [];
+
+    % Create the filters
+    [b1, a1] = butter(3, (2*[30, 400])/fs);
+    [b2, a2] = butter(3, (40)/fs);
 
     % For each point export
     for pp = 1:length(points_IDs)
         point_ID = points_IDs(pp);
 
         reference_signal = signals(pp, :, reference_signal_index);
+        ecg_signal = signals(pp, :, ecg_signal_index);
         
-        % First filter
-        [b, a] = butter(3, (2*[30, 400])/fs);
-        filtered_reference_signal = filtfilt(b, a, reference_signal);
-        % Second filter
-        [b, a] = butter(3, (40)/fs);
+        % Apply first filter
+        filtered_reference_signal = filtfilt(b1, a1, reference_signal);
+        filtered_ecg_signal = filtfilt(b1, a1, ecg_signal);
+        
         abs_filtered_reference_signal = abs(filtered_reference_signal);
-
-        reference_activation = filtfilt(b, a, abs_filtered_reference_signal);
+        abs_filtered_ecg_signal = abs(filtered_ecg_signal);
+        
+        % Apply second filter
+        reference_activation = filtfilt(b2, a2, abs_filtered_reference_signal);
+        ecg_activation = filtfilt(b2, a2, abs_filtered_ecg_signal);
 
         thr = 0.08;
-        [pks, peak_train] = findpeaks(reference_activation, 'MinPeakHeight', ...
-            thr,'MinPeakDistance',600);
-        
-        window_bounds = [-150 30];
-        windows = peak_train' + window_bounds;
+        [~, reference_peak_train] = findpeaks(reference_activation, ...
+            'MinPeakHeight', thr,'MinPeakDistance',600);
+        [~, ecg_peak_train] = findpeaks(ecg_activation, "MinPeakHeight", thr, ...
+            "MinPeakDistance", 600);
 
-        if AF
-            % Shift on the left the windows by a certain amount
-            windows = windows - 100;
+        % Create the windows
+        window_bounds = [-100 100];
+        
+        reference_windows = reference_peak_train' + window_bounds;
+        ecg_windows = ecg_peak_train' + window_bounds;
+        
+        % Exclude the ecg windows from the reference windows, works if
+        % windows have same length
+        for rr = 1:size(reference_windows, 1)
+            reference_window = reference_windows(rr, :);
+            for ee = 1:size(ecg_windows, 1)
+                ecg_window = ecg_windows(ee, :);
+                
+                if min([reference_window ecg_window]) == min(reference_window)
+                    reference_window(2) = min([reference_window(2) ecg_window]);
+                else
+                   reference_window(1) = max([reference_window(1) ecg_window]);
+                end
+            end
+            % If reference window has length 0, mark to discard
+            if min(reference_window) == max(reference_window)
+                reference_window = [-1 -1];
+            end
+            reference_windows(rr, :) = reference_window;
         end
-        % windows = windows(any(windows>1,2), :);
-        windows = max(windows,1);
+
+        % Discard previously marked windows
+        reference_windows = reference_windows(any(reference_windows>1, 2), :);
+
+        % Crop windows that exceed the boundaries
+        reference_windows = max(reference_windows,1);
+        reference_windows = min(reference_windows, 2500);
 
         % For each electrode
         for ee = 1:length(electrodes)
@@ -97,8 +136,8 @@ for ipat = 1:length(patient_dirs)
             egm_signal = signals(pp,:,electrode_index)';
             
             % Extract the windows from the signal
-            egm_windows = arrayfun((@(a,b) egm_signal(a:b)), ...
-                windows(:,1), windows(:,2), 'Unif', 0);
+            egm_windows = arrayfun(@(a,b) egm_signal(a:b), ...
+                reference_windows(:,1), reference_windows(:,2), 'Unif', 0);
             
             % Compute the peak to peak measure of each window
             egm_ptp = cellfun(@(x) peak2peak(x), egm_windows);
@@ -114,25 +153,15 @@ for ipat = 1:length(patient_dirs)
 
             % Window the coordinates
             coordinates_windows = arrayfun(@(a,b) coordinates(a:b,:), ...
-                windows(:,1), windows(:,2), "Unif", 0);
+                reference_windows(:,1), reference_windows(:,2), "Unif", 0);
             % Compute the mean of the coordinates within the windows
             mean_coordinates = cellfun((@(x) mean(x,1)), coordinates_windows, "Unif", 0);
             mean_coordinates = cell2mat(mean_coordinates);
 
-            T = [T; [egm_ptp mean_coordinates]]; %#ok<AGROW>
+            coordinates = [coordinates; mean_coordinates]; %#ok<AGROW>
+            voltages = [voltages; egm_ptp]; %#ok<AGROW>
+            break
         end
     end
     break
 end
-
-
-
-
-
-
-
-
-
-
-
-
