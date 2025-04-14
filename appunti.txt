@@ -1,0 +1,3 @@
+FA: scala voltage map [0.05 0.24]
+SR: [0.05 0.5]
+deep scar: < 0.02
