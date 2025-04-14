@@ -98,7 +98,6 @@ for ipat = 1:length(patient_dirs)
 
         % Create the windows
         window_bounds = [-100 100];
-        
         reference_windows = reference_peak_train' + window_bounds;
         ecg_windows = ecg_peak_train' + window_bounds;
         
@@ -143,25 +142,53 @@ for ipat = 1:length(patient_dirs)
             egm_ptp = cellfun(@(x) peak2peak(x), egm_windows);
 
             % Get the coordinates of the electrode
-            coordinates = squeeze(positions(pp, ee, :, :))';
+            electrode_coordinates = squeeze(positions(pp, ee, :, :))';
             % Remove trailing 0s
-            coordinates = coordinates(1:find(sum(coordinates, 2), 1, "last"),:);
+            electrode_coordinates = electrode_coordinates( ...
+                1:find(sum(electrode_coordinates, 2), 1, "last"),:);
             % Linearly interpolate coordinates to the length of the signals
-            coordinates_timestamps = linspace(1, size(signals,2), length(coordinates));
-            coordinates = interp1(coordinates_timestamps, coordinates, ...
-                1:length(signals), "linear");
-
+            electrode_coordinates_timestamps = linspace( ...
+                1, size(signals,2), length(electrode_coordinates));
+            electrode_coordinates = interp1(electrode_coordinates_timestamps, ...
+                electrode_coordinates, 1:length(signals), "linear");
             % Window the coordinates
-            coordinates_windows = arrayfun(@(a,b) coordinates(a:b,:), ...
+            electrode_coordinates_windows = arrayfun(@(a,b) electrode_coordinates(a:b,:), ...
                 reference_windows(:,1), reference_windows(:,2), "Unif", 0);
             % Compute the mean of the coordinates within the windows
-            mean_coordinates = cellfun((@(x) mean(x,1)), coordinates_windows, "Unif", 0);
-            mean_coordinates = cell2mat(mean_coordinates);
+            mean_electorde_coordinates = cellfun((@(x) mean(x,1)), ...
+                electrode_coordinates_windows, "Unif", 0);
+            mean_electorde_coordinates = cell2mat(mean_electorde_coordinates);
 
-            coordinates = [coordinates; mean_coordinates]; %#ok<AGROW>
+            coordinates = [coordinates; mean_electorde_coordinates]; %#ok<AGROW>
             voltages = [voltages; egm_ptp]; %#ok<AGROW>
             break
         end
+        break % remove later
     end
+    voltages = rand([1000, 1]);
+    coordinates = rand([1000, 3]);
+
+    
+
+
+
+
+
+
+    % Write mesh to disk for meshtool
+    vtkwrite(strcat(data_dir, '/', patient_ID, '/', 'LA_mesh.vtk'), 'polydata', ...
+        'triangle', vertices(:,1), vertices(:,2), vertices(:,3), triangles);
+
+    % command = ['./MeshTool resample surfmesh -msh=LA_mesh.vtk -avrg=5 ' ...
+    %     '-outmsh=resampled_LA_mesh.vtk -ofmt=vtk_polydata -surf_corr=0.8'];
+    % status = system(command);
+    % if status ~= 0
+    %     error("MeshTool exit status is non-zero.")
+    % end
+
+
+
+
+
     break
 end
