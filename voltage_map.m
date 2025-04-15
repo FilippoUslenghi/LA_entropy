@@ -46,6 +46,7 @@ for ipat = 1:length(patient_dirs)
     columns = cellstr(columns);
     electrodes = cellstr(electrodes);
     signals = double(signals);
+    triangles = double(triangles) + 1;
     
     % Check whether is AF or no
     if contains(map_name, "FA") || contains(map_name, "AF")
@@ -161,13 +162,11 @@ for ipat = 1:length(patient_dirs)
 
             coordinates = [coordinates; mean_electorde_coordinates]; %#ok<AGROW>
             voltages = [voltages; egm_ptp]; %#ok<AGROW>
-            break
         end
-        break % remove later
     end
-    voltages = rand([1000, 1]);
-    coordinates = rand([1000, 3]);
 
+    % Mesh
+    vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltages, coordinates, false);
     
 
 
@@ -176,8 +175,8 @@ for ipat = 1:length(patient_dirs)
 
 
     % Write mesh to disk for meshtool
-    vtkwrite(strcat(data_dir, '/', patient_ID, '/', 'LA_mesh.vtk'), 'polydata', ...
-        'triangle', vertices(:,1), vertices(:,2), vertices(:,3), triangles);
+    % vtkwrite(strcat(data_dir, '/', patient_ID, '/', 'LA_mesh.vtk'), 'polydata', ...
+    %      'triangle', vertices(:,1), vertices(:,2), vertices(:,3), triangles);
 
     % command = ['./MeshTool resample surfmesh -msh=LA_mesh.vtk -avrg=5 ' ...
     %     '-outmsh=resampled_LA_mesh.vtk -ofmt=vtk_polydata -surf_corr=0.8'];
