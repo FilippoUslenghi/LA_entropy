@@ -3,6 +3,7 @@ function vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltag
     r = 8;
     d = 2;
     vertex_voltage_map = cell(length(vertices), 1);
+
     % if resampled_mesh
     %     % Get neighboring vertices    
     %     neighbors = zeros(size(Vertices,1), size(Vertices,1));
@@ -41,7 +42,7 @@ function vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltag
     sphere_candidates = pdist2(vertices, coordinates, 'squaredeuclidean') <= r^2;
     
     % Cylinder
-    cylinder_distance = @(u, v, n_v) norm(cross(u - v, u - n_v)) / norm(n_v);
+    cylinder_distance = @(u, v, n_v) norm(cross(u - v, u - n_v)); % / norm(n_v) == 1;
     cylinder_candidates_distances = ones(size(sphere_candidates)) + d;
 
     [vertices_idx, coordinates_idx] = find(sphere_candidates);
@@ -55,14 +56,7 @@ function vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltag
 
         cylinder_candidates_distances(ii,jj) = cylinder_distance(u, v, n_v);
     end
-    cylinder_candidates = cylinder_candidates_distances <= d;
-
-    final_candidates = bitand(sphere_candidates, cylinder_candidates);
-
-    % TODO: cylinder_candidates has the same non_zero elements of
-    % sphere_candidates
-    % Sanity check: check whether sphere_candidates and cylinder_candidates have more
-    % non-zero elements than final_candidates.
+    final_candidates = cylinder_candidates_distances <= d;
 
 end
 
