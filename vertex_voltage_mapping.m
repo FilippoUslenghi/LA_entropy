@@ -1,10 +1,9 @@
-function vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltages, coordinates, resampled_mesh)
+function vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltages, coordinates, is_resampled)
 
     r = 8;
     d = 2;
-    vertex_voltage_map = cell(length(vertices), 1);
 
-    % if resampled_mesh
+    % if is_resampled
     %     % Get neighboring vertices    
     %     neighbors = zeros(size(Vertices,1), size(Vertices,1));
     %     for ii = 1:size(Vertices,1)
@@ -57,6 +56,7 @@ function vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltag
         cylinder_candidates_distances(ii,jj) = cylinder_distance(u, v, n_v);
     end
     final_candidates = cylinder_candidates_distances <= d;
-
+    
+    vertex_voltage_map = voltages' .* final_candidates;
 end
 

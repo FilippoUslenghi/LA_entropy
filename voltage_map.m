@@ -165,15 +165,6 @@ for ipat = 1:length(patient_dirs)
         end
     end
 
-    % Mesh
-    vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltages, coordinates, false);
-    
-
-
-
-
-
-
     % Write mesh to disk for meshtool
     % vtkwrite(strcat(data_dir, '/', patient_ID, '/', 'LA_mesh.vtk'), 'polydata', ...
     %      'triangle', vertices(:,1), vertices(:,2), vertices(:,3), triangles);
@@ -185,9 +176,9 @@ for ipat = 1:length(patient_dirs)
     %     error("MeshTool exit status is non-zero.")
     % end
 
-
-
-
-
+    % Sphere and cylinder computation on mesh
+    is_resampled = false;
+    vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltages, coordinates, is_resampled);
+    
     break
 end
