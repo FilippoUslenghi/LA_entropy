@@ -49,10 +49,9 @@ for ipat = 1:length(patient_dirs)
     triangles = double(triangles) + 1;
     
     % Check whether is AF or no
+    AF = false;
     if contains(map_name, "FA") || contains(map_name, "AF")
         AF = true;
-    else
-        AF = false;
     end
     if patient_ID == "100"
         AF = true;
@@ -179,6 +178,6 @@ for ipat = 1:length(patient_dirs)
     % Sphere and cylinder computation on mesh
     is_resampled = false;
     vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltages, coordinates, is_resampled);
-    
+    final_voltage_map = max(vertex_voltage_map, [], 2);
     break
 end
