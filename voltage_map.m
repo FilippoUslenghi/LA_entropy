@@ -164,10 +164,11 @@ for ipat = 1:length(patient_dirs)
         end
     end
 
-    % Write mesh to disk for meshtool
+    % Write mesh to disk for MeshTool
     % vtkwrite(strcat(data_dir, '/', patient_ID, '/', 'LA_mesh.vtk'), 'polydata', ...
     %      'triangle', vertices(:,1), vertices(:,2), vertices(:,3), triangles);
 
+    % Resample mesh with MeshTool
     % command = ['./MeshTool resample surfmesh -msh=LA_mesh.vtk -avrg=5 ' ...
     %     '-outmsh=resampled_LA_mesh.vtk -ofmt=vtk_polydata -surf_corr=0.8'];
     % status = system(command);

@@ -43,7 +43,6 @@ function vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltag
     % Cylinder
     cylinder_distance = @(u, v, n_v) norm(cross(u - v, u - n_v)); % / norm(n_v) == 1;
     cylinder_candidates_distances = ones(size(sphere_candidates)) + d;
-
     [vertices_idx, coordinates_idx] = find(sphere_candidates);
     for idx = 1:length(vertices_idx)
         ii = vertices_idx(idx);
