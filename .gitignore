@@ -6,5 +6,5 @@ processed_data
 *.log
 .DS_store
 *.asv
-MeshTool
+meshtool
 
