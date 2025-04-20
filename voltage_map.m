@@ -22,7 +22,10 @@ patient_dirs = dir(data_dir);
 % For each patient
 for ipat = 1:length(patient_dirs)
     patient_dir = patient_dirs(ipat);
-
+    
+    if patient_dir.name ~= "125"
+        continue
+    end
     % Skip the '.' and '..' directories
     if contains(patient_dir.name, '.')
         continue
@@ -176,7 +179,7 @@ for ipat = 1:length(patient_dirs)
 
 
     % Write mesh to disk for meshtool
-    vtkwrite(strcat(data_dir, '/', patient_ID, '/', 'LA_mesh.vtk'), 'polydata', ...
+    vtkwrite(strjoin([data_dir, patient_ID, 'LA_mesh.vtk'], '/'), 'polydata', ...
          'triangle', vertices(:,1), vertices(:,2), vertices(:,3), triangles);
 
     % Resample mesh with meshtool
@@ -189,7 +192,7 @@ for ipat = 1:length(patient_dirs)
         error("Meshtool exit status is non-zero.")
     end
 
-    [vertices_rsmp, triangels_rsmp] = read_vtk("processed_data/100/LA_mesh_resampled.vtk");
+    [vertices_rsmp, triangels_rsmp] = read_vtk(strjoin([data_dir, patient_ID, 'LA_mesh_resampled.vtk'], '/'));
     vertices_rsmp = vertices_rsmp';
     triangels_rsmp = triangels_rsmp';
 
