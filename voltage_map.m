@@ -165,6 +165,16 @@ for ipat = 1:length(patient_dirs)
         end
     end
 
+    % Sphere and cylinder computation on mesh
+    is_resampled = false;
+    vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltages, coordinates, is_resampled);
+    final_voltage_map = max(vertex_voltage_map, [], 2);
+    
+    figure()
+    title("Before resampling")
+    trisurf(triangles, vertices(:,1), vertices(:,2), vertices(:,3), final_voltage_map, 'FaceAlpha', 0.7)
+
+
     % Write mesh to disk for meshtool
     vtkwrite(strcat(data_dir, '/', patient_ID, '/', 'LA_mesh.vtk'), 'polydata', ...
          'triangle', vertices(:,1), vertices(:,2), vertices(:,3), triangles);
@@ -174,14 +184,22 @@ for ipat = 1:length(patient_dirs)
         "-outmsh=%s -ofmt=vtk_polydata -surf_corr=0.8", ...
         strjoin([data_dir, patient_ID, 'LA_mesh.vtk'], '/'), ...
         strjoin([data_dir, patient_ID, 'LA_mesh_resampled.vtk'], '/'));
-    status = system(command);
+    [status, ~] = system(command);
     if status ~= 0
         error("Meshtool exit status is non-zero.")
     end
 
+    [vertices_rsmp, triangels_rsmp] = read_vtk("processed_data/100/LA_mesh_resampled.vtk");
+    vertices_rsmp = vertices_rsmp';
+    triangels_rsmp = triangels_rsmp';
+
     % Sphere and cylinder computation on mesh
-    is_resampled = false;
-    vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltages, coordinates, is_resampled);
-    final_voltage_map = max(vertex_voltage_map, [], 2);
+    is_resampled = true;
+    vertex_voltage_map = vertex_voltage_mapping(vertices_rsmp, triangels_rsmp, voltages, coordinates, is_resampled);
+    final_voltage_map_rsmp = max(vertex_voltage_map, [], 2);
+    
+    figure()
+    title("After resampling")
+    trisurf(triangels_rsmp, vertices_rsmp(:,1), vertices_rsmp(:,2), vertices_rsmp(:,3), final_voltage_map_rsmp, 'FaceAlpha', 0.7)
     break
 end

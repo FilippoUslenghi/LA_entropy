@@ -1,0 +1,6 @@
+Estrarre i valori dagli EGM secondo la strategia migliore
+
+(?) Filtrare i segnali in base al valore del potenziale? (noisy_signals)
+
+(?) Accorciare i segnali delle posizioni degli elettrodi tenendo quello più corto? (guarda TODO in carser.py)
+
