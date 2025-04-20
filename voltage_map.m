@@ -74,6 +74,7 @@ for ipat = 1:length(patient_dirs)
 
     % For each point export
     for pp = 1:length(points_IDs)
+
         point_ID = points_IDs(pp);
 
         reference_signal = signals(pp, :, reference_signal_index);
@@ -164,17 +165,19 @@ for ipat = 1:length(patient_dirs)
         end
     end
 
-    % Write mesh to disk for MeshTool
-    % vtkwrite(strcat(data_dir, '/', patient_ID, '/', 'LA_mesh.vtk'), 'polydata', ...
-    %      'triangle', vertices(:,1), vertices(:,2), vertices(:,3), triangles);
+    % Write mesh to disk for meshtool
+    vtkwrite(strcat(data_dir, '/', patient_ID, '/', 'LA_mesh.vtk'), 'polydata', ...
+         'triangle', vertices(:,1), vertices(:,2), vertices(:,3), triangles);
 
-    % Resample mesh with MeshTool
-    % command = ['./MeshTool resample surfmesh -msh=LA_mesh.vtk -avrg=5 ' ...
-    %     '-outmsh=resampled_LA_mesh.vtk -ofmt=vtk_polydata -surf_corr=0.8'];
-    % status = system(command);
-    % if status ~= 0
-    %     error("MeshTool exit status is non-zero.")
-    % end
+    % Resample mesh with meshtool
+    command = sprintf("./meshtool/meshtool resample surfmesh -msh=%s -avrg=5 " + ...
+        "-outmsh=%s -ofmt=vtk_polydata -surf_corr=0.8", ...
+        strjoin([data_dir, patient_ID, 'LA_mesh.vtk'], '/'), ...
+        strjoin([data_dir, patient_ID, 'LA_mesh_resampled.vtk'], '/'));
+    status = system(command);
+    if status ~= 0
+        error("Meshtool exit status is non-zero.")
+    end
 
     % Sphere and cylinder computation on mesh
     is_resampled = false;
