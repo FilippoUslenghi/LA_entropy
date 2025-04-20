@@ -206,10 +206,12 @@ class Carser:
             elif self.catheter == "MCC_DX":
                 self.points_data["electrodes"] = self.mcc_dx_dipoles
 
-            # break  # Debugging
-
         # Remove the empty preallocated space
-        index = np.argwhere(self.points_data["points_IDs"] == 0)[0].item()
+        index = np.argwhere(self.points_data["points_IDs"] == 0)
+        if index.size == 0:
+            index = len(self.points_data["points_IDs"])
+        else:
+            index = index[0].item()
         self.points_data["points_IDs"] = self.points_data["points_IDs"][:index]
         self.points_data["signals"] = self.points_data["signals"][
             :index,
@@ -266,14 +268,7 @@ class Carser:
 
         # Check if there are more than one LA map
         if len(sorted_LA_maps) > 1:
-            # Check if the ratio of the number of points between the first and second LA maps is too low
-            if (
-                sorted_LA_maps[0][1] / (sorted_LA_maps[1][1] + sys.float_info.epsilon)
-                < 1.5
-            ):
-                raise ValueError(
-                    "The ratio of the number of points between the first and second LA maps is too low."
-                )
+            logger.error("More than one LA map found in the study.")
 
         # Check if one LA map was found
         if LA_map is None:
@@ -698,10 +693,17 @@ if __name__ == "__main__":
         if patient == "to-process":
             continue
         if patient == "Export_REDO-PVI-07_09_2024-13-39-51":
+            continue
             carser = Carser(
                 os.path.join(data_dir, patient, "REDO PVI 07_09_2024 13-39-51.xml")
             )
             carser()
+            continue
+        if patient == "114" or patient == "122":
+            # Skip patients due to no PentaRay/OctaRay connectors
+            continue
+        if patient == "67":
+            # Skip patients due to no LA map
             continue
 
         out_dir = os.path.join(data_dir.replace("raw_data", "processed_data"), patient)
@@ -721,7 +723,7 @@ if __name__ == "__main__":
         ][0]
         study_path = os.path.join(data_dir, patient, subfolder, study_xml)
         carser = Carser(study_path)
-        # logging.debug(f"Processing patient {patient}")
+
         try:
             carser()
             with open("skipped_points.log", "at") as file:
@@ -749,4 +751,3 @@ if __name__ == "__main__":
             )
         except Exception as e:
             logging.error(f"Error processing patient {patient}: {e}", exc_info=True)
-        # break  # Debugging
