@@ -172,10 +172,15 @@ for ipat = 1:length(patient_dirs)
     is_resampled = false;
     vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltages, coordinates, is_resampled);
     final_voltage_map = max(vertex_voltage_map, [], 2);
-    
+
+    % Plot mesh
     figure()
     title("Before resampling")
     trisurf(triangles, vertices(:,1), vertices(:,2), vertices(:,3), final_voltage_map, 'FaceAlpha', 0.7)
+    colorbar
+    if AF, clim([0.05 0.24]); else, clim([0.05, 0.5]); end
+
+    entropy_calculation(final_voltage_map)
 
 
     % Write mesh to disk for meshtool
@@ -201,8 +206,14 @@ for ipat = 1:length(patient_dirs)
     vertex_voltage_map = vertex_voltage_mapping(vertices_rsmp, triangels_rsmp, voltages, coordinates, is_resampled);
     final_voltage_map_rsmp = max(vertex_voltage_map, [], 2);
     
+    % Plot resampled mesh
     figure()
     title("After resampling")
     trisurf(triangels_rsmp, vertices_rsmp(:,1), vertices_rsmp(:,2), vertices_rsmp(:,3), final_voltage_map_rsmp, 'FaceAlpha', 0.7)
+    colorbar
+    if AF, clim([0.05 0.24]); else, clim([0.05, 0.5]); end
+    
+    entropy_calculation(final_voltage_map_rsmp);
+
     break
 end
