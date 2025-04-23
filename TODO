@@ -1,7 +1,13 @@
 Estrarre i valori dagli EGM secondo la strategia migliore
+Escludi il qrs dal segnale dell'EGM e prendi il ptp di ogni finestra
 
-(?) Filtrare i segnali in base al valore del potenziale? (noisy_signals)
+(?) Filtrare i segnali in base al valore del potenziale? (noisy_signals) threshold a <3.5!
 
-(?) Accorciare i segnali delle posizioni degli elettrodi tenendo quello più corto? (guarda TODO in carser.py)
+(?) Accorciare i segnali delle posizioni degli elettrodi tenendo quello più corto?
+No, assegna il valore del ptp alla posizione più vicina
 
 (?) Cosa facciamo dei pazienti con il pacing del CS? Finora li abbiamo scartati
+
+Segnare quali pazienti sono AF o quali no (guarda file di Gigli)
+
+Gestire istogramma e calcolo entropia
