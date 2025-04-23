@@ -1,5 +1,11 @@
 function vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltages, coordinates, is_resampled)
 
+    % Keep only voltages <3.5 mV
+    voltage_upper_bound = 3.5;
+    coordinates = coordinates(voltages < voltage_upper_bound, :);
+    voltages = voltages(voltages < voltage_upper_bound);
+    
+
     r = 8;
     d = 2;
 
