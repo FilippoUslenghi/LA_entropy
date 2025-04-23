@@ -1,5 +1,5 @@
 %% Progetto punto 3)
-function [] = entropy_calculation(signalVertices_2)
+function [entropy] = entropy_calculation(signalVertices_2)
     %Calcolare l'entropia di Shannon dei valori calcolati al punto 2).
     %Per prima cosa stimerei la distribuzione di probabilità semplicemente con un istogramma a prescindere della densità locale
     %dei punti. 
@@ -35,7 +35,7 @@ function [] = entropy_calculation(signalVertices_2)
 
     p = p(p ~= 0);  
     
-    g = - sum(p.*log(p));
+    % g = - sum(p.*log(p));
 
     entropy = log(w) - sum(p.*log(p));
     disp(entropy)

@@ -4,3 +4,4 @@ Estrarre i valori dagli EGM secondo la strategia migliore
 
 (?) Accorciare i segnali delle posizioni degli elettrodi tenendo quello più corto? (guarda TODO in carser.py)
 
+(?) Cosa facciamo dei pazienti con il pacing del CS? Finora li abbiamo scartati

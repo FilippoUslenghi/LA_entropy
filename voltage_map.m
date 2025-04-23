@@ -15,18 +15,21 @@ clearvars
 
 % Deactivate warning for performance reasons
 warning('off', 'signal:findpeaks:largeMinPeakHeight')
+% Deactivate plots
+set(groot,'defaultFigureVisible','off')
 
 data_dir = "processed_data";
 patient_dirs = dir(data_dir);
+
+n_patients = sum(~isnan(cellfun(@str2double, {patient_dirs.name})));
+data = table('Size', [n_patients, 3], 'VariableTypes', ["string" "double" "double"], ...
+    'VariableNames', ["Patient ID" "Entropy" "LASE"]);
 
 % For each patient
 for ipat = 1:length(patient_dirs)
     patient_dir = patient_dirs(ipat);
     
-    if patient_dir.name ~= "125"
-        continue
-    end
-    % Skip the '.' and '..' directories
+    % Skip the '.', '..' and '.DS_Store' directories
     if contains(patient_dir.name, '.')
         continue
     end
@@ -174,13 +177,13 @@ for ipat = 1:length(patient_dirs)
     final_voltage_map = max(vertex_voltage_map, [], 2);
 
     % Plot mesh
-    figure()
-    title("Before resampling")
-    trisurf(triangles, vertices(:,1), vertices(:,2), vertices(:,3), final_voltage_map, 'FaceAlpha', 0.7)
-    colorbar
-    if AF, clim([0.05 0.24]); else, clim([0.05, 0.5]); end
+    % figure()
+    % title("Before resampling")
+    % trisurf(triangles, vertices(:,1), vertices(:,2), vertices(:,3), final_voltage_map, 'FaceAlpha', 0.7)
+    % colorbar
+    % if AF, clim([0.05 0.24]); else, clim([0.05, 0.5]); end
 
-    entropy_calculation(final_voltage_map)
+    entropy = entropy_calculation(final_voltage_map);
 
 
     % Write mesh to disk for meshtool
@@ -207,13 +210,17 @@ for ipat = 1:length(patient_dirs)
     final_voltage_map_rsmp = max(vertex_voltage_map, [], 2);
     
     % Plot resampled mesh
-    figure()
-    title("After resampling")
-    trisurf(triangels_rsmp, vertices_rsmp(:,1), vertices_rsmp(:,2), vertices_rsmp(:,3), final_voltage_map_rsmp, 'FaceAlpha', 0.7)
-    colorbar
-    if AF, clim([0.05 0.24]); else, clim([0.05, 0.5]); end
+    % figure()
+    % title("After resampling")
+    % trisurf(triangels_rsmp, vertices_rsmp(:,1), vertices_rsmp(:,2), vertices_rsmp(:,3), final_voltage_map_rsmp, 'FaceAlpha', 0.7)
+    % colorbar
+    % if AF, clim([0.05 0.24]); else, clim([0.05, 0.5]); end
     
-    entropy_calculation(final_voltage_map_rsmp);
+    lase = entropy_calculation(final_voltage_map_rsmp);
 
-    break
+    data(ipat,:) = {patient_ID, entropy, lase};
 end
+writetable(data, "entropy.csv")
+
+% Activate plots
+set(groot,'defaultFigureVisible','on')
