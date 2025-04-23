@@ -14,14 +14,14 @@ function [entropy] = entropy_calculation(signalVertices_2)
 
     %save('array_signalVertices',signalVertices_, 'v7.3');
     
-    std_signal = std(signalVertices_2, 'omitnan');
-    figure('Name', '3 Distribuzione di probabilità')
+    % std_signal = std(signalVertices_2, 'omitnan');
+    figure()
     % signalVertices_2 = signalVertices_2 * 0.003;
     h = histogram(signalVertices_2,'Normalization','probability');
     %h.BinWidth = 100;
     h.BinWidth = 0.3;
     
-    numBins = h.NumBins;
+    % numBins = h.NumBins;
 
     %knnh = histogram(knnsignalVertices_,'Normalization','probability');
 
