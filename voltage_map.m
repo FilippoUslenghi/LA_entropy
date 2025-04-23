@@ -4,6 +4,7 @@ clearvars
 % Deactivate warning for performance reasons
 warning('off', 'signal:findpeaks:largeMinPeakHeight')
 
+figure_dir = "figures";
 data_dir = "processed_data";
 patient_dirs = dir(data_dir);
 
@@ -15,11 +16,6 @@ data = table('Size', [n_patients, 3], 'VariableTypes', ["string" "double" "doubl
 for ipat = 1:length(patient_dirs)
     patient_dir = patient_dirs(ipat);
     
-    % Debugging
-    if patient_dir.name ~= "125"
-        continue
-    end
-
     % Skip the '.', '..' and '.DS_Store' directories
     if contains(patient_dir.name, '.')
         continue
@@ -87,6 +83,7 @@ for ipat = 1:length(patient_dirs)
         % Create the windows
         window_bounds = [-50; 100];
         ecg_windows = ecg_peak_train + window_bounds;
+        ecg_windows = min(max(1,ecg_windows), 2500);
         
         % Exclude the ecg windows from the EGM signals
         egm_windows_bounds = [ecg_windows, [length(ecg_signal); 1]];
@@ -135,13 +132,19 @@ for ipat = 1:length(patient_dirs)
     final_voltage_map = max(vertex_voltage_map, [], 2);
 
     % Plot mesh
+    mkdir(strjoin([figure_dir, patient_ID], '/'))
+
     figure()
     title("Before resampling")
     trisurf(triangles, vertices(:,1), vertices(:,2), vertices(:,3), final_voltage_map, 'FaceAlpha', 0.7)
     colorbar
     if AF, clim([0.05 0.24]); else, clim([0.05, 0.5]); end
-
-    entropy = entropy_calculation(final_voltage_map);
+    savefig(strjoin([figure_dir, patient_ID, "voltage_map.fig"], '/'))
+    close
+    
+    [f, entropy] = entropy_calculation(final_voltage_map);
+    savefig(f, strjoin([figure_dir, patient_ID, "entropy.fig"], '/'))
+    close
 
 
     % Write mesh to disk for meshtool
@@ -173,10 +176,13 @@ for ipat = 1:length(patient_dirs)
     trisurf(triangels_rsmp, vertices_rsmp(:,1), vertices_rsmp(:,2), vertices_rsmp(:,3), final_voltage_map_rsmp, 'FaceAlpha', 0.7)
     colorbar
     if AF, clim([0.05 0.24]); else, clim([0.05, 0.5]); end
+    savefig(strjoin([figure_dir, patient_ID, "voltage_map_rsmp.fig"], '/'))
+    close
     
-    lase = entropy_calculation(final_voltage_map_rsmp);
+    [f_rsmp, lase] = entropy_calculation(final_voltage_map_rsmp);
+    savefig(f_rsmp, strjoin([figure_dir, patient_ID, "entropy_rsmp.fig"], '/'))
+    close
 
     data(ipat,:) = {patient_ID, entropy, lase};
-    break
 end
 writetable(data, "entropy.csv")
