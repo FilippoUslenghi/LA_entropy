@@ -214,11 +214,7 @@ class Carser:
             index = index[0].item()
         self.points_data["points_IDs"] = self.points_data["points_IDs"][:index]
         self.points_data["signals"] = self.points_data["signals"][
-            :index,
-            :,
-            : -np.sum(
-                np.sum(np.abs(self.points_data["signals"]), axis=(0, 1)) == 0
-            ),  # Do not touch
+            :index, :, np.sum(self.points_data["signals"] != 0, axis=(0, 1)) != 0
         ]
         self.points_data["positions"] = self.points_data["positions"][:index, :, :, :]
 
@@ -704,6 +700,9 @@ if __name__ == "__main__":
             continue
         if patient == "67":
             # Skip patients due to no LA map
+            continue
+
+        if patient != "111":
             continue
 
         out_dir = os.path.join(data_dir.replace("raw_data", "processed_data"), patient)
