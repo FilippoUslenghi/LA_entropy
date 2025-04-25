@@ -7,6 +7,5 @@ processed_data
 .DS_store
 *.asv
 meshtool
-entropy.csv
 figures
 openep-core
