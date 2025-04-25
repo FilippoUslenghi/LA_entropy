@@ -152,7 +152,7 @@ class Carser:
         self.points_data["points_IDs"] = np.zeros([valid_points], dtype=np.int32)
 
         self.points_data["signals"] = np.zeros(
-            [valid_points, 2500, 12 + 3 + 40], dtype=np.float32
+            [valid_points, 2500, 12 + 9 + 40], dtype=np.float32
         )  # Overestimated number of columns, will be shrinked later
 
         self.points_data["columns"] = []
@@ -704,6 +704,9 @@ if __name__ == "__main__":
             continue
         if patient == "67":
             # Skip patients due to no LA map
+            continue
+
+        if patient != "111":
             continue
 
         out_dir = os.path.join(data_dir.replace("raw_data", "processed_data"), patient)
