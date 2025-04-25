@@ -17,7 +17,7 @@ for ipat = 1:length(patient_dirs)
     patient_dir = patient_dirs(ipat);
     
     % Debugging
-    if patient_dir.name ~= "100"
+    if patient_dir.name ~= "111"
         continue
     end
     
@@ -131,34 +131,33 @@ for ipat = 1:length(patient_dirs)
         end
     end
 
-    mkdir(strjoin([figure_dir, patient_ID], '/'))
+    status = mkdir(strjoin([figure_dir, patient_ID], '/'));
 
-    % Sphere and cylinder computation on mesh
-    is_resampled = false;
-    vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltages, coordinates, is_resampled);
-    final_voltage_map = max(vertex_voltage_map, [], 2);
-
-    % Plot mesh
-    figure()
-    title("Before resampling")
-    
-    trisurf(triangles, vertices(:,1), vertices(:,2), vertices(:,3), ...
-        final_voltage_map, 'edgecolor', 'none', 'facecolor', 'interp');
-    colormap(flipud(turbo));
-    colormap([0.5, 0.5, 0.5; flipud(turbo)]); % Append gray to the colormap
-    colorbar;
-    clb = colorbar;
-    clb.Limits = [0, 4];
-    clim([0.05, 0.25]);
-    material dull
-    cameraLight;
-    if AF, clim([0.05 0.24]); else, clim([0.05, 0.5]); end
-    savefig(strjoin([figure_dir, patient_ID, "voltage_map.fig"], '/'))
-    close
-    
-    [f, entropy] = entropy_calculation(final_voltage_map);
-    savefig(f, strjoin([figure_dir, patient_ID, "entropy.fig"], '/'))
-    close
+    % % Sphere and cylinder computation on mesh
+    % is_resampled = false;
+    % vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltages, coordinates, is_resampled);
+    % final_voltage_map = max(vertex_voltage_map, [], 2);
+    % 
+    % % Plot mesh
+    % figure()
+    % title("Before resampling")
+    % 
+    % trisurf(triangles, vertices(:,1), vertices(:,2), vertices(:,3), ...
+    %     final_voltage_map, 'edgecolor', 'none', 'facecolor', 'interp');
+    % colormap(flipud(turbo));
+    % colormap([0.5, 0.5, 0.5; flipud(turbo)]); % Append gray to the colormap
+    % colorbar;
+    % clb = colorbar;
+    % clb.Limits = [0, 4];
+    % material dull
+    % cameraLight;
+    % if AF, clim([0.05 0.24]); else, clim([0.05, 0.5]); end
+    % savefig(strjoin([figure_dir, patient_ID, "voltage_map.fig"], '/'))
+    % close
+    % 
+    % [f, entropy] = entropy_calculation(final_voltage_map);
+    % savefig(f, strjoin([figure_dir, patient_ID, "entropy.fig"], '/'))
+    % close
 
     % Write mesh to disk for meshtool
     vtkwrite(strjoin([data_dir, patient_ID, 'LA_mesh.vtk'], '/'), 'polydata', ...
@@ -193,7 +192,6 @@ for ipat = 1:length(patient_dirs)
     colorbar;
     clb = colorbar;
     clb.Limits = [0, 4];
-    clim([0.05, 0.25]);
     material dull
     cameraLight;
     if AF, clim([0.05 0.24]); else, clim([0.05, 0.5]); end
