@@ -189,7 +189,7 @@ for ipat = 1:length(patient_dirs)
     
     % Plot resampled mesh
     figure()
-    title("After resampling")
+    title(sprintf("Patient %s after resampling", patient_ID))
     trisurf(triangles_rsmp, vertices_rsmp(:,1), vertices_rsmp(:,2), vertices_rsmp(:,3), ...
         final_voltage_map_rsmp, 'edgecolor', 'none', 'facecolor', 'interp');
     colormap(flipud(turbo));
