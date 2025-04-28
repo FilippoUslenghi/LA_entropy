@@ -3,6 +3,7 @@ clearvars
 
 % Deactivate warning for performance reasons
 warning('off', 'signal:findpeaks:largeMinPeakHeight')
+warning('off', 'MATLAB:MKDIR:DirectoryExists')
 
 figure_dir = "figures";
 data_dir = "processed_data";
@@ -39,9 +40,9 @@ for ipat = 1:length(patient_dirs)
     fs = double(fs);
    
     % Skip the patients with CS pacing
-    if contains(map_name, "PACE")
-        continue
-    end
+    % if contains(map_name, "PACE")
+    %     continue
+    % end
     
     disp("Processing patient " + patient_ID)
 
