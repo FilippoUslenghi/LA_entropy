@@ -108,7 +108,7 @@ for ipat = 1:length(patient_dirs)
             filtered_egm_signal = filtfilt(b1, a1, egm_signal); % TODO: change egm_signal with filtered_egm_signal
             
             % Extract the windows from the signal
-            egm_windows = arrayfun(@(a,b) egm_signal(a:b), ...
+            egm_windows = arrayfun(@(a,b) filtered_egm_signal(a:b), ...
                 egm_windows_bounds(:,1), egm_windows_bounds(:,2), 'Unif', 0);
             
             % Compute the peak to peak measure of each window
