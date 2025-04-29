@@ -69,7 +69,7 @@ for ipat = 1:length(patient_dirs)
     voltages = [];
 
     % Create the filters
-    [b1, a1] = butter(3, (2*[30, 400])/fs);
+    [b1, a1] = butter(3, (2*[30, 300])/fs);
     [b2, a2] = butter(3, (40)/fs);
 
     % For each point export
@@ -105,6 +105,7 @@ for ipat = 1:length(patient_dirs)
             electrode_index = find(strcmp(electrodes{ee}, columns));
             
             egm_signal = signals(pp,:,electrode_index)';
+            filtered_egm_signal = filtfilt(b1, a1, egm_signal); % TODO: change egm_signal with filtered_egm_signal
             
             % Extract the windows from the signal
             egm_windows = arrayfun(@(a,b) egm_signal(a:b), ...
