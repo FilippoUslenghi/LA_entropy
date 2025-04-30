@@ -28,6 +28,7 @@ for ipat = 1:length(patient_dirs)
     end
     % Skip the patient 118 because it has too many points
     if patient_dir.name == "118"
+        data(ipat,:) = {patient_ID, 0, 0};
         continue
     end
 
@@ -210,4 +211,4 @@ for ipat = 1:length(patient_dirs)
 
     data(ipat,:) = {patient_ID, 0, lase};
 end
-writetable(data, "lase.csv")
+writetable(data, "results/no_thrs_filt/lase.csv")
