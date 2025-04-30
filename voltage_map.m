@@ -106,10 +106,10 @@ for ipat = 1:length(patient_dirs)
             electrode_index = find(strcmp(electrodes{ee}, columns));
             
             egm_signal = signals(pp,:,electrode_index)';
-            filtered_egm_signal = filtfilt(b1, a1, egm_signal);
+            % filtered_egm_signal = filtfilt(b1, a1, egm_signal);
             
             % Extract the windows from the signal
-            egm_windows = arrayfun(@(a,b) filtered_egm_signal(a:b), ...
+            egm_windows = arrayfun(@(a,b) egm_signal(a:b), ...
                 egm_windows_bounds(:,1), egm_windows_bounds(:,2), 'Unif', 0);
             
             % Compute the peak to peak measure of each window
@@ -211,4 +211,6 @@ for ipat = 1:length(patient_dirs)
 
     data(ipat,:) = {patient_ID, 0, lase};
 end
-writetable(data, "results/no_thrs_filt/lase.csv")
+writetable(data, "results/no_thrs_no_filt/lase.csv")
+
+% TODO run script for no threshold and unfiltered EGM
