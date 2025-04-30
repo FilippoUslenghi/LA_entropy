@@ -105,7 +105,7 @@ for ipat = 1:length(patient_dirs)
             electrode_index = find(strcmp(electrodes{ee}, columns));
             
             egm_signal = signals(pp,:,electrode_index)';
-            filtered_egm_signal = filtfilt(b1, a1, egm_signal); % TODO: change egm_signal with filtered_egm_signal
+            filtered_egm_signal = filtfilt(b1, a1, egm_signal);
             
             % Extract the windows from the signal
             egm_windows = arrayfun(@(a,b) filtered_egm_signal(a:b), ...
