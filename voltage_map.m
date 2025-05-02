@@ -211,6 +211,4 @@ for ipat = 1:length(patient_dirs)
 
     data(ipat,:) = {patient_ID, 0, lase};
 end
-writetable(data, "results/no_thrs_no_filt/lase.csv")
-
-% TODO run script for no threshold and unfiltered EGM
+% writetable(data, "results/no_thrs_no_filt/lase.csv")
