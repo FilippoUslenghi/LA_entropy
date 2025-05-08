@@ -12,3 +12,5 @@ Segnare quali pazienti sono AF o quali no (guarda file di Gigli)
 Gestire istogramma e calcolo entropia
 
 Gestire resmapling mesh per avere 5000±100 vertices
+
+Threshold PTP a 15, 20 o 25 mV.
