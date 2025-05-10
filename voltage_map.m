@@ -106,7 +106,7 @@ for ipat = 1:length(patient_dirs)
             electrode_index = find(strcmp(electrodes{ee}, columns));
             
             egm_signal = signals(pp,:,electrode_index)';
-            % filtered_egm_signal = filtfilt(b1, a1, egm_signal);
+            egm_signal = filtfilt(b1, a1, egm_signal);
             
             % Extract the windows from the signal
             egm_windows = arrayfun(@(a,b) egm_signal(a:b), ...
@@ -211,4 +211,6 @@ for ipat = 1:length(patient_dirs)
 
     data(ipat,:) = {patient_ID, 0, lase};
 end
-% writetable(data, "results/no_thrs_no_filt/lase.csv")
+out_dir = "results/thrs_<25_filt";
+mkdir(out_dir)
+writetable(data, strjoin([out_dir "lase.csv"], '/'))
