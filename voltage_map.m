@@ -9,6 +9,10 @@ figure_dir = "figures";
 data_dir = "processed_data";
 patient_dirs = dir(data_dir);
 
+out_dir = "results";
+experiment = "thrs_<15_filt";
+mkdir(strjoin([out_dir, experiment], '/'))
+
 n_patients = sum(~isnan(cellfun(@str2double, {patient_dirs.name})));
 data = table('Size', [n_patients, 3], 'VariableTypes', ["string" "double" "double"], ...
     'VariableNames', ["Patient ID" "Entropy" "LASE"]);
@@ -202,15 +206,15 @@ for ipat = 1:length(patient_dirs)
     material dull
     cameraLight;
     if AF, clim([0.05 0.24]); else, clim([0.05, 0.5]); end
-    savefig(strjoin([figure_dir, patient_ID, "voltage_map_rsmp.fig"], '/'))
+    mkdir(strjoin([figure_dir, patient_ID,  experiment], '/'))
+    savefig(strjoin([figure_dir, patient_ID,  experiment, "voltage_map_rsmp.fig"], '/'))
     close
     
     [f_rsmp, lase] = entropy_calculation(final_voltage_map_rsmp);
-    savefig(f_rsmp, strjoin([figure_dir, patient_ID, "entropy_rsmp.fig"], '/'))
+    mkdir(strjoin([figure_dir, patient_ID, experiment], '/'))
+    savefig(f_rsmp, strjoin([figure_dir, patient_ID, experiment, "entropy_rsmp.fig"], '/'))
     close
 
     data(ipat,:) = {patient_ID, 0, lase};
 end
-out_dir = "results/thrs_<25_filt";
-mkdir(out_dir)
-writetable(data, strjoin([out_dir "lase.csv"], '/'))
+% writetable(data, strjoin([out_dir, experiment, "lase.csv"], '/'))
