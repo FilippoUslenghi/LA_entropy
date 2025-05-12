@@ -10,9 +10,8 @@ data_dir = "processed_data";
 patient_dirs = dir(data_dir);
 
 out_dir = "results";
-experiment = "thrs_<15_filt";
+experiment = "thrs_<25_filt";
 mkdir(strjoin([out_dir, experiment], '/'))
-
 n_patients = sum(~isnan(cellfun(@str2double, {patient_dirs.name})));
 data = table('Size', [n_patients, 3], 'VariableTypes', ["string" "double" "double"], ...
     'VariableNames', ["Patient ID" "Entropy" "LASE"]);
@@ -217,4 +216,4 @@ for ipat = 1:length(patient_dirs)
 
     data(ipat,:) = {patient_ID, 0, lase};
 end
-% writetable(data, strjoin([out_dir, experiment, "lase.csv"], '/'))
+writetable(data, strjoin([out_dir, experiment, "lase.csv"], '/'))

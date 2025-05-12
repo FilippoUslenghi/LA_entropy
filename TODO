@@ -1,16 +1,10 @@
-Estrarre i valori dagli EGM secondo la strategia migliore: usa i percentili
-
-(?) Filtrare i segnali in base al valore del potenziale? (noisy_signals) threshold a <3.5!
-
-(?) Accorciare i segnali delle posizioni degli elettrodi tenendo quello più corto?
-No, assegna il valore del ptp alla posizione più vicina
-
 (?) Cosa facciamo dei pazienti con il pacing del CS? Li stiamo considerando come gli altri
 
-Segnare quali pazienti sono AF o quali no (guarda file di Gigli)
+Segnare quali pazienti sono AF o quali no per gestire colori voltage map (guarda file di Gigli)
 
 Gestire istogramma e calcolo entropia
 
 Gestire resmapling mesh per avere 5000±100 vertices
 
-Threshold PTP a 15, 20 o 25 mV.
+Threshold PTP a 15, 20 o 25 mV.		FATTO
+
