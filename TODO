@@ -8,3 +8,6 @@ Gestire resmapling mesh per avere 5000±100 vertices
 
 Threshold PTP a 15, 20 o 25 mV.		FATTO
 
+Provare differenti bin width: 0.1, 0.3, auto
+
+
