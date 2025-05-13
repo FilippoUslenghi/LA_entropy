@@ -25,6 +25,7 @@ n_patients = sum(~isnan(cellfun(@str2double, {patient_dirs.name})));
 data = table('Size', [n_patients, 3], 'VariableTypes', ["string" "double" "double"], ...
     'VariableNames', ["Patient ID" "Entropy" "LASE"]);
 
+load("patients_rhythms.mat")
 % For each patient
 for ipat = 1:length(patient_dirs)
     patient_dir = patient_dirs(ipat);
@@ -66,7 +67,8 @@ for ipat = 1:length(patient_dirs)
     
     % Check whether is AF or no
     AF = false;
-    if contains(map_name, "FA") || contains(map_name, "AF")
+    rhythm = string(patients_rhythms{strcmp(patients_rhythms(:,1), '100'), 2});
+    if rhythm ~= "SR"
         AF = true;
     end
     if patient_ID == "100"
