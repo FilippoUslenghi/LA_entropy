@@ -9,8 +9,17 @@ figure_dir = "figures";
 data_dir = "processed_data";
 patient_dirs = dir(data_dir);
 
+experiments = ["no_thrs_no_filt",   "no_thrs_filt", ...
+               "thrs_<3,5_no_filt", "thrs_<3,5_filt", ...
+               "thrs_<15_no_filt",  "thrs_<15_filt", ...
+               "thrs_<20_no_filt",  "thrs_<20_filt", ...
+               "thrs_<25_no_filt",  "thrs_<25_filt"];
+thrss = [inf, inf, 3.5, 3.5, 15, 15, 20, 20, 25, 25];
+for iexp = 1:length(experiments)
 out_dir = "results";
-experiment = "thrs_<25_filt";
+experiment = experiments(iexp);
+thrs = thrss(iexp);
+disp([experiment, thrs, iexp])
 mkdir(strjoin([out_dir, experiment], '/'))
 n_patients = sum(~isnan(cellfun(@str2double, {patient_dirs.name})));
 data = table('Size', [n_patients, 3], 'VariableTypes', ["string" "double" "double"], ...
@@ -98,7 +107,7 @@ for ipat = 1:length(patient_dirs)
         window_bounds = [-50; 100];
         ecg_windows = ecg_peak_train + window_bounds;
         ecg_windows = min(max(1,ecg_windows), 2500);
-        
+
         % Exclude the ecg windows from the EGM signals
         egm_windows_bounds = [ecg_windows, [length(ecg_signal); 1]];
         egm_windows_bounds = reshape(circshift(egm_windows_bounds(:), 1), ...
@@ -109,8 +118,10 @@ for ipat = 1:length(patient_dirs)
             electrode_index = find(strcmp(electrodes{ee}, columns));
             
             egm_signal = signals(pp,:,electrode_index)';
-            egm_signal = filtfilt(b1, a1, egm_signal);
-            
+            if mod(iexp,2) == 0
+                egm_signal = filtfilt(b1, a1, egm_signal);
+            end
+
             % Extract the windows from the signal
             egm_windows = arrayfun(@(a,b) egm_signal(a:b), ...
                 egm_windows_bounds(:,1), egm_windows_bounds(:,2), 'Unif', 0);
@@ -189,7 +200,7 @@ for ipat = 1:length(patient_dirs)
 
     % Sphere and cylinder computation on mesh
     is_resampled = true;
-    vertex_voltage_map_rsmp = vertex_voltage_mapping(vertices_rsmp, triangles_rsmp, voltages, coordinates, is_resampled);
+    vertex_voltage_map_rsmp = vertex_voltage_mapping(vertices_rsmp, triangles_rsmp, voltages, coordinates, is_resampled, thrs);
     final_voltage_map_rsmp = max(vertex_voltage_map_rsmp, [], 2);
     
     % Plot resampled mesh
@@ -217,3 +228,4 @@ for ipat = 1:length(patient_dirs)
     data(ipat,:) = {patient_ID, 0, lase};
 end
 writetable(data, strjoin([out_dir, experiment, "lase.csv"], '/'))
+end

@@ -1,7 +1,7 @@
-function vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltages, coordinates, is_resampled)
+function vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltages, coordinates, is_resampled, thrs)
 
     % Keep only voltages less than given threshold
-    voltage_upper_bound = 25;
+    voltage_upper_bound = thrs;
     coordinates = coordinates(voltages < voltage_upper_bound, :);
     voltages = voltages(voltages < voltage_upper_bound);
     
