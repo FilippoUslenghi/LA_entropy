@@ -52,11 +52,6 @@ for ipat = 1:length(patient_dirs)
     load(strjoin([path_to_data "LA_points_data.mat"], '/'))
 
     fs = double(fs);
-   
-    % Skip the patients with CS pacing
-    % if contains(map_name, "PACE")
-    %     continue
-    % end
     
     disp("Processing patient " + patient_ID)
 
@@ -69,9 +64,6 @@ for ipat = 1:length(patient_dirs)
     AF = false;
     rhythm = string(patients_rhythms{strcmp(patients_rhythms(:,1), '100'), 2});
     if rhythm ~= "SR"
-        AF = true;
-    end
-    if patient_ID == "100"
         AF = true;
     end
 
