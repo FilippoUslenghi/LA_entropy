@@ -9,31 +9,22 @@ figure_dir = "figures";
 data_dir = "processed_data";
 patient_dirs = dir(data_dir);
 
-experiments = ["no_thrs_no_filt",   "no_thrs_filt", ...
-               "thrs_<3,5_no_filt", "thrs_<3,5_filt", ...
-               "thrs_<15_no_filt",  "thrs_<15_filt", ...
-               "thrs_<20_no_filt",  "thrs_<20_filt", ...
-               "thrs_<25_no_filt",  "thrs_<25_filt"];
-thrss = [inf, inf, 3.5, 3.5, 15, 15, 20, 20, 25, 25];
-for iexp = 1:length(experiments)
-out_dir = "results";
-experiment = experiments(iexp);
-thrs = thrss(iexp);
-disp([experiment, thrs, iexp])
-mkdir(strjoin([out_dir, experiment], '/'))
 n_patients = sum(~isnan(cellfun(@str2double, {patient_dirs.name})));
 data = table('Size', [n_patients, 3], 'VariableTypes', ["string" "double" "double"], ...
     'VariableNames', ["Patient ID" "Entropy" "LASE"]);
 
 load("patients_rhythms.mat")
+
+thrs = 15;
+filtering = false;
 % For each patient
 for ipat = 1:length(patient_dirs)
     patient_dir = patient_dirs(ipat);
     
     % Debugging
-    % if patient_dir.name ~= "111"
-    %     continue
-    % end
+    if patient_dir.name ~= "46"
+        continue
+    end
     
     % Skip the '.', '..' and '.DS_Store' directories
     if contains(patient_dir.name, '.')
@@ -62,8 +53,8 @@ for ipat = 1:length(patient_dirs)
     
     % Check whether is AF or no
     AF = false;
-    rhythm = string(patients_rhythms{strcmp(patients_rhythms(:,1), '100'), 2});
-    if rhythm ~= "SR"
+    rhythm = string(patients_rhythms{strcmp(patients_rhythms(:,1), patient_ID), 2});
+    if rhythm ~= "RS"
         AF = true;
     end
 
@@ -112,7 +103,7 @@ for ipat = 1:length(patient_dirs)
             electrode_index = find(strcmp(electrodes{ee}, columns));
             
             egm_signal = signals(pp,:,electrode_index)';
-            if mod(iexp,2) == 0
+            if filtering
                 egm_signal = filtfilt(b1, a1, egm_signal);
             end
 
@@ -146,33 +137,27 @@ for ipat = 1:length(patient_dirs)
         end
     end
 
-    mkdir(strjoin([figure_dir, patient_ID], '/'));
-
     % % Sphere and cylinder computation on mesh
-    % is_resampled = false;
-    % vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltages, coordinates, is_resampled);
-    % final_voltage_map = max(vertex_voltage_map, [], 2);
-    % 
-    % % Plot mesh
-    % figure()
-    % title("Before resampling")
-    % 
-    % trisurf(triangles, vertices(:,1), vertices(:,2), vertices(:,3), ...
-    %     final_voltage_map, 'edgecolor', 'none', 'facecolor', 'interp');
-    % colormap(flipud(turbo));
-    % colormap([0.5, 0.5, 0.5; flipud(turbo)]); % Append gray to the colormap
-    % colorbar;
-    % clb = colorbar;
-    % clb.Limits = [0, 4];
-    % material dull
-    % cameraLight;
-    % if AF, clim([0.05 0.24]); else, clim([0.05, 0.5]); end
-    % savefig(strjoin([figure_dir, patient_ID, "voltage_map.fig"], '/'))
-    % close
-    % 
-    % [f, entropy] = entropy_calculation(final_voltage_map);
-    % savefig(f, strjoin([figure_dir, patient_ID, "entropy.fig"], '/'))
-    % close
+    is_resampled = false;
+    vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltages, coordinates, is_resampled, thrs);
+    final_voltage_map = max(vertex_voltage_map, [], 2);
+
+    % Plot mesh
+    figure()
+    title("Before resampling")
+
+    trisurf(triangles, vertices(:,1), vertices(:,2), vertices(:,3), ...
+        final_voltage_map, 'edgecolor', 'none', 'facecolor', 'interp');
+    colormap(flipud(turbo));
+    colormap([0.5, 0.5, 0.5; flipud(turbo)]); % Append gray to the colormap
+    colorbar;
+    clb = colorbar;
+    clb.Limits = [0, 4];
+    material dull
+    cameraLight;
+    if AF, clim([0.05 0.24]); else, clim([0.05, 1.5]); end
+
+    [f, entropy] = entropy_calculation(final_voltage_map);
 
     % Write mesh to disk for meshtool
     vtkwrite(strjoin([data_dir, patient_ID, 'LA_mesh.vtk'], '/'), 'polydata', ...
@@ -208,17 +193,9 @@ for ipat = 1:length(patient_dirs)
     clb = colorbar;
     material dull
     cameraLight;
-    if AF, clim([0.05 0.24]); else, clim([0.05, 0.5]); end
-    mkdir(strjoin([figure_dir, patient_ID,  experiment], '/'))
-    savefig(strjoin([figure_dir, patient_ID,  experiment, "voltage_map_rsmp.fig"], '/'))
-    close
+    if AF, clim([0.05 0.24]); else, clim([0.05, 1.5]); end
     
     [f_rsmp, lase] = entropy_calculation(final_voltage_map_rsmp);
-    mkdir(strjoin([figure_dir, patient_ID, experiment], '/'))
-    savefig(f_rsmp, strjoin([figure_dir, patient_ID, experiment, "entropy_rsmp.fig"], '/'))
-    close
 
     data(ipat,:) = {patient_ID, 0, lase};
-end
-writetable(data, strjoin([out_dir, experiment, "lase.csv"], '/'))
 end

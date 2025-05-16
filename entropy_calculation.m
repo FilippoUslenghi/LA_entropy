@@ -38,7 +38,7 @@ function [f, entropy] = entropy_calculation(signalVertices_2)
     % g = - sum(p.*log(p));
 
     entropy = log(w) - sum(p.*log(p));
-    disp(entropy)
+    disp("Entropy = " + entropy)
     %entropy2 = - sum(p.*log(p));
     %disp(entropy2)
 

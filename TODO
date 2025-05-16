@@ -1,13 +1,8 @@
 (?) Cosa facciamo dei pazienti con il pacing del CS? Li stiamo considerando come gli altri
 
-Segnare quali pazienti sono AF o quali no per gestire colori voltage map (guarda file di Gigli)
+Gestire istogramma e calcolo entropia i.e. Provare differenti bin width: 0.1, 0.3, auto
 
-Gestire istogramma e calcolo entropia
+Gestire resmapling mesh per avere 5000±100 vertices i.e. prova -avrg=2 e vai di try and error
 
-Gestire resmapling mesh per avere 5000±100 vertices
-
-Threshold PTP a 15, 20 o 25 mV.		FATTO
-
-Provare differenti bin width: 0.1, 0.3, auto
-
+prova codice marta per vedere il numero di vertici mesh downsampled
 
