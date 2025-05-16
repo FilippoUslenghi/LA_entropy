@@ -6,3 +6,12 @@ Gestire resmapling mesh per avere 5000±100 vertices i.e. prova -avrg=2 e vai di
 
 prova codice marta per vedere il numero di vertici mesh downsampled
 
+
+
+
+--------------------------------------------------
+
+Calcola voltage map su paziente 77 con mappa in SR
+
+Cerca quali pazienti hanno mappa sia in FA che SR
+
