@@ -17,6 +17,7 @@ load("patients_rhythms.mat")
 
 thrs = 15;
 filtering = false;
+verbose = true;
 % For each patient
 for ipat = 1:length(patient_dirs)
     patient_dir = patient_dirs(ipat);
@@ -157,7 +158,7 @@ for ipat = 1:length(patient_dirs)
     cameraLight;
     if AF, clim([0.05 0.24]); else, clim([0.05, 1.5]); end
 
-    [f, entropy] = entropy_calculation(final_voltage_map);
+    [f, entropy] = entropy_calculation(final_voltage_map, verbose);
 
     % Write mesh to disk for meshtool
     vtkwrite(strjoin([data_dir, patient_ID, 'LA_mesh.vtk'], '/'), 'polydata', ...
@@ -195,7 +196,7 @@ for ipat = 1:length(patient_dirs)
     cameraLight;
     if AF, clim([0.05 0.24]); else, clim([0.05, 1.5]); end
     
-    [f_rsmp, lase] = entropy_calculation(final_voltage_map_rsmp);
+    [f_rsmp, lase] = entropy_calculation(final_voltage_map_rsmp, verbose);
 
     data(ipat,:) = {patient_ID, 0, lase};
 end
