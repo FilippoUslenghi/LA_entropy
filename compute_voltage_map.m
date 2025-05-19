@@ -6,12 +6,8 @@ data_dir = "processed_data";
 patient_dirs = dir(data_dir);
 out_dir = "results";
 
-experiments = ["no_thrs_no_filt",   "no_thrs_filt", ...
-               "thrs_<3,5_no_filt", "thrs_<3,5_filt", ...
-               "thrs_<15_no_filt",  "thrs_<15_filt", ...
-               "thrs_<20_no_filt",  "thrs_<20_filt", ...
-               "thrs_<25_no_filt",  "thrs_<25_filt"];
-thrss = [inf, inf, 3.5, 3.5, 15, 15, 20, 20, 25, 25];
+experiments = ["thrs_<15_no_filt",  "thrs_<15_filt"];
+thrss = [15, 15];
 
 verbose = false;
 for iexp = 1:length(experiments)
