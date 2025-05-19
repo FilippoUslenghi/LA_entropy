@@ -146,7 +146,7 @@ for iexp = 1:length(experiments)
     
         % Sphere and cylinder computation on mesh
         is_resampled = false;
-        vertex_voltage_map = vertex_voltage_mapping(MESH.vertices, MESH.triangles, voltages, coordinates, is_resampled);
+        vertex_voltage_map = vertex_voltage_mapping(MESH.vertices, MESH.triangles, voltages, coordinates, is_resampled, thrs);
         final_voltage_map = max(vertex_voltage_map, [], 2);
         [f, entropy] = entropy_calculation(final_voltage_map, verbose);
     
