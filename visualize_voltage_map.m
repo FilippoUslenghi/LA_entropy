@@ -7,8 +7,8 @@ warning('off', 'MATLAB:MKDIR:DirectoryExists')
 
 load("patients_rhythms.mat")
 data_dir = "processed_data";
-patient_ID = "46";
 
+patient_ID = "46";
 thrs = 15;
 filtering = true;
 verbose = true;
@@ -128,8 +128,6 @@ trisurf(triangles, vertices(:,1), vertices(:,2), vertices(:,3), ...
 colormap(flipud(turbo));
 colormap([0.5, 0.5, 0.5; flipud(turbo)]); % Append gray to the colormap
 colorbar;
-clb = colorbar;
-clb.Limits = [0, 4];
 material dull
 cameraLight;
 if AF, clim([0.05 0.24]); else, clim([0.05, 1.5]); end
@@ -167,7 +165,6 @@ trisurf(triangles_rsmp, vertices_rsmp(:,1), vertices_rsmp(:,2), vertices_rsmp(:,
 colormap(flipud(turbo));
 colormap([0.5, 0.5, 0.5; flipud(turbo)]); % Append gray to the colormap
 colorbar;
-clb = colorbar;
 material dull
 cameraLight;
 if AF, clim([0.05 0.24]); else, clim([0.05, 1.5]); end
