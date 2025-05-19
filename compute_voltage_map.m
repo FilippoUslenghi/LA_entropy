@@ -1,13 +1,12 @@
 clc
 clearvars
 
-figure_dir = "figures";
 data_dir = "processed_data";
 patient_dirs = dir(data_dir);
 out_dir = "results";
 
 experiments = ["thrs_<15_no_filt",  "thrs_<15_filt"];
-thrss = [15, 15];
+thrs = [15, 15];
 
 verbose = false;
 for iexp = 1:length(experiments)
@@ -33,11 +32,6 @@ for iexp = 1:length(experiments)
         warning('off', 'MATLAB:MKDIR:DirectoryExists')
 
         patient_dir = patient_dirs(ipat);
-        
-        % Debugging
-        % if patient_dir.name ~= "111"
-        %     continue
-        % end
         
         % Skip the '.', '..' and '.DS_Store' directories
         if contains(patient_dir.name, '.')
@@ -150,33 +144,11 @@ for iexp = 1:length(experiments)
             end
         end
     
-        mkdir(strjoin([figure_dir, INFO.patient_ID], '/'));
-    
-        % % Sphere and cylinder computation on mesh
-        % is_resampled = false;
-        % vertex_voltage_map = vertex_voltage_mapping(MESH.vertices, MESH.triangles, voltages, coordinates, is_resampled);
-        % final_voltage_map = max(vertex_voltage_map, [], 2);
-        % 
-        % % Plot mesh
-        % figure()
-        % title("Before resampling")
-        % 
-        % trisurf(MESH.triangles, MESH.vertices(:,1), MESH.vertices(:,2), MESH.vertices(:,3), ...
-        %     final_voltage_map, 'edgecolor', 'none', 'facecolor', 'interp');
-        % colormap(flipud(turbo));
-        % colormap([0.5, 0.5, 0.5; flipud(turbo)]); % Append gray to the colormap
-        % colorbar;
-        % clb = colorbar;
-        % clb.Limits = [0, 4];
-        % material dull
-        % cameraLight;
-        % if AF, clim([0.05 0.24]); else, clim([0.05, 0.5]); end
-        % savefig(strjoin([figure_dir, INFO.patient_ID, "voltage_map.fig"], '/'))
-        % close
-        % 
-        % [f, entropy] = entropy_calculation(final_voltage_map, verbose);
-        % savefig(f, strjoin([figure_dir, INFO.patient_ID, "entropy.fig"], '/'))
-        % close
+        % Sphere and cylinder computation on mesh
+        is_resampled = false;
+        vertex_voltage_map = vertex_voltage_mapping(MESH.vertices, MESH.triangles, voltages, coordinates, is_resampled);
+        final_voltage_map = max(vertex_voltage_map, [], 2);
+        [f, entropy] = entropy_calculation(final_voltage_map, verbose);
     
         % Write mesh to disk for meshtool
         vtkwrite(strjoin([data_dir, INFO.patient_ID, 'LA_mesh.vtk'], '/'), 'polydata', ...
@@ -200,27 +172,7 @@ for iexp = 1:length(experiments)
         is_resampled = true;
         vertex_voltage_map_rsmp = vertex_voltage_mapping(vertices_rsmp, triangles_rsmp, voltages, coordinates, is_resampled, thrs);
         final_voltage_map_rsmp = max(vertex_voltage_map_rsmp, [], 2);
-        
-        % Plot resampled mesh
-        figure()
-        title(sprintf("Patient %s after resampling", INFO.patient_ID))
-        trisurf(triangles_rsmp, vertices_rsmp(:,1), vertices_rsmp(:,2), vertices_rsmp(:,3), ...
-            final_voltage_map_rsmp, 'edgecolor', 'none', 'facecolor', 'interp');
-        colormap(flipud(turbo));
-        colormap([0.5, 0.5, 0.5; flipud(turbo)]); % Append gray to the colormap
-        colorbar;
-        clb = colorbar;
-        material dull
-        cameraLight;
-        if AF, clim([0.05 0.24]); else, clim([0.05, 0.5]); end
-        mkdir(strjoin([figure_dir, INFO.patient_ID,  experiment], '/'))
-        savefig(strjoin([figure_dir, INFO.patient_ID,  experiment, "voltage_map_rsmp.fig"], '/'))
-        close
-        
         [f_rsmp, lase] = entropy_calculation(final_voltage_map_rsmp, verbose);
-        mkdir(strjoin([figure_dir, INFO.patient_ID, experiment], '/'))
-        savefig(f_rsmp, strjoin([figure_dir, INFO.patient_ID, experiment, "entropy_rsmp.fig"], '/'))
-        close
     
         data(ipat,:) = {INFO.patient_ID, 0, lase};
     end
