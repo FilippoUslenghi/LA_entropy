@@ -51,7 +51,7 @@ for iexp = 1:length(experiments)
     
         INFO.fs = double(INFO.fs);
         
-        disp("Processing patient " + INFO.patient_ID + "\n")
+        disp("Processing patient " + INFO.patient_ID + newline)
     
         POINTS.columns = cellstr(POINTS.columns);
         POINTS.electrodes = cellstr(POINTS.electrodes);
