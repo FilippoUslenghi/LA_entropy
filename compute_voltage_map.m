@@ -6,7 +6,7 @@ patient_dirs = dir(data_dir);
 out_dir = "results";
 
 experiments = ["thrs_<15_no_filt",  "thrs_<15_filt"];
-thrs = [15, 15];
+thrss = [15, 15];
 
 verbose = false;
 for iexp = 1:length(experiments)
