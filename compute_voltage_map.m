@@ -17,8 +17,8 @@ for iexp = 1:length(experiments)
     disp([experiment, thrs, iexp])
     
     n_patients = sum(~isnan(cellfun(@str2double, {patient_dirs.name})));
-    data = parallel.pool.Constant(table('Size', [n_patients, 3], 'VariableTypes', ["string" "double" "double"], ...
-        'VariableNames', ["Patient ID" "Entropy" "LASE"]));
+    data = table('Size', [n_patients, 3], 'VariableTypes', ["string" "double" "double"], ...
+        'VariableNames', ["Patient ID" "Entropy" "LASE"]);
     
     patients_rhythms = load("patients_rhythms.mat").patients_rhythms;
 
