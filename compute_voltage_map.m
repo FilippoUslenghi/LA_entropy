@@ -10,9 +10,6 @@ thrss = [15, 15];
 
 verbose = false;
 for iexp = 1:length(experiments)
-    if iexp == 2
-        break
-    end
     thrs = thrss(iexp);
     experiment = experiments(iexp);
     mkdir(strjoin([out_dir, experiment], '/'))
