@@ -9,7 +9,7 @@ load("patients_rhythms.mat")
 data_dir = "processed_data";
 
 patient_ID = "46";
-thrs = 15;
+voltage_thrs = 15;
 filtering = true;
 verbose = true;
 
@@ -116,7 +116,7 @@ end
 
 % Sphere and cylinder computation on mesh
 is_resampled = false;
-vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltages, coordinates, is_resampled, thrs);
+vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltages, coordinates, is_resampled, voltage_thrs);
 final_voltage_map = max(vertex_voltage_map, [], 2);
 
 % Plot mesh
@@ -124,7 +124,7 @@ figure()
 title(sprintf("Patient %s after resampling", patient_ID))
 
 trisurf(triangles, vertices(:,1), vertices(:,2), vertices(:,3), ...
-    final_voltage_map, 'edgecolor', 'none', 'facecolor', 'interp');
+    full(final_voltage_map), 'edgecolor', 'none', 'facecolor', 'interp');
 colormap(flipud(turbo));
 colormap([0.5, 0.5, 0.5; flipud(turbo)]); % Append gray to the colormap
 colorbar;
@@ -135,18 +135,18 @@ if AF, clim([0.05 0.24]); else, clim([0.05, 1.5]); end
 [f, entropy] = entropy_calculation(final_voltage_map, verbose);
 
 % Write mesh to disk for meshtool
-vtkwrite(strjoin([data_dir, patient_ID, 'LA_mesh.vtk'], '/'), 'polydata', ...
-    'triangle', vertices(:,1), vertices(:,2), vertices(:,3), triangles);
+% vtkwrite(strjoin([data_dir, patient_ID, 'LA_mesh.vtk'], '/'), 'polydata', ...
+%     'triangle', vertices(:,1), vertices(:,2), vertices(:,3), triangles);
 
 % Resample mesh with meshtool
-command = sprintf("./meshtool/meshtool resample surfmesh -msh=%s -avrg=5 " + ...
-    "-outmsh=%s -ofmt=vtk_polydata -surf_corr=0.8", ...
-    strjoin([data_dir, patient_ID, 'LA_mesh.vtk'], '/'), ...
-    strjoin([data_dir, patient_ID, 'LA_mesh_resampled.vtk'], '/'));
-[status, ~] = system(command);
-if status ~= 0
-    error("Meshtool exit status is non-zero.")
-end
+% command = sprintf("./meshtool/meshtool resample surfmesh -msh=%s -avrg=2 " + ...
+%     "-outmsh=%s -ofmt=vtk_polydata -surf_corr=0.8", ...
+%     strjoin([data_dir, patient_ID, 'LA_mesh.vtk'], '/'), ...
+%     strjoin([data_dir, patient_ID, 'LA_mesh_resampled.vtk'], '/'));
+% [status, ~] = system(command);
+% if status ~= 0
+%     error("Meshtool exit status is non-zero.")
+% end
 
 [vertices_rsmp, triangles_rsmp] = read_vtk(strjoin([data_dir, patient_ID, 'LA_mesh_resampled.vtk'], '/'));
 vertices_rsmp = vertices_rsmp';
@@ -154,14 +154,14 @@ triangles_rsmp = triangles_rsmp';
 
 % Sphere and cylinder computation on mesh
 is_resampled = true;
-vertex_voltage_map_rsmp = vertex_voltage_mapping(vertices_rsmp, triangles_rsmp, voltages, coordinates, is_resampled, thrs);
+vertex_voltage_map_rsmp = vertex_voltage_mapping(vertices_rsmp, triangles_rsmp, voltages, coordinates, is_resampled, voltage_thrs);
 final_voltage_map_rsmp = max(vertex_voltage_map_rsmp, [], 2);
 
 % Plot resampled mesh
 figure()
 title(sprintf("Patient %s after resampling", patient_ID))
 trisurf(triangles_rsmp, vertices_rsmp(:,1), vertices_rsmp(:,2), vertices_rsmp(:,3), ...
-    final_voltage_map_rsmp, 'edgecolor', 'none', 'facecolor', 'interp');
+    full(final_voltage_map_rsmp), 'edgecolor', 'none', 'facecolor', 'interp');
 colormap(flipud(turbo));
 colormap([0.5, 0.5, 0.5; flipud(turbo)]); % Append gray to the colormap
 colorbar;

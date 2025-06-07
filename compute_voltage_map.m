@@ -5,16 +5,16 @@ data_dir = "processed_data";
 patient_dirs = dir(data_dir);
 out_dir = "results";
 
-experiments = ["thrs_<15_no_filt",  "thrs_<15_filt"];
-thrss = [15, 15];
+experiments = ["thrs_<15_filt"];
+voltage_thrss = [15];
 
 verbose = false;
 for iexp = 1:length(experiments)
-    thrs = thrss(iexp);
+    voltage_thrs = voltage_thrss(iexp);
     experiment = experiments(iexp);
     mkdir(strjoin([out_dir, experiment], '/'))
     
-    disp([experiment, thrs, iexp])
+    disp([experiment, voltage_thrs, iexp])
     
     n_patients = sum(~isnan(cellfun(@str2double, {patient_dirs.name})));
     data = table('Size', [n_patients, 3], 'VariableTypes', ["string" "double" "double"], ...
@@ -143,23 +143,23 @@ for iexp = 1:length(experiments)
     
         % Sphere and cylinder computation on mesh
         is_resampled = false;
-        vertex_voltage_map = vertex_voltage_mapping(MESH.vertices, MESH.triangles, voltages, coordinates, is_resampled, thrs);
+        vertex_voltage_map = vertex_voltage_mapping(MESH.vertices, MESH.triangles, voltages, coordinates, is_resampled, voltage_thrs);
         final_voltage_map = max(vertex_voltage_map, [], 2);
         [f, entropy] = entropy_calculation(final_voltage_map, verbose);
     
         % Write mesh to disk for meshtool
-        vtkwrite(strjoin([data_dir, INFO.patient_ID, 'LA_mesh.vtk'], '/'), 'polydata', ...
-             'triangle', MESH.vertices(:,1), MESH.vertices(:,2), MESH.vertices(:,3), MESH.triangles);
-    
+        % vtkwrite(strjoin([data_dir, INFO.patient_ID, 'LA_mesh.vtk'], '/'), 'polydata', ...
+        %      'triangle', MESH.vertices(:,1), MESH.vertices(:,2), MESH.vertices(:,3), MESH.triangles);
+
         % Resample mesh with meshtool
-        command = sprintf("./meshtool/meshtool resample surfmesh -msh=%s -avrg=5 " + ...
-            "-outmsh=%s -ofmt=vtk_polydata -surf_corr=0.8", ...
-            strjoin([data_dir, INFO.patient_ID, 'LA_mesh.vtk'], '/'), ...
-            strjoin([data_dir, INFO.patient_ID, 'LA_mesh_resampled.vtk'], '/'));
-        [status, ~] = system(command);
-        if status ~= 0
-            error("Meshtool exit status is non-zero.")
-        end
+        % command = sprintf("./meshtool/meshtool resample surfmesh -msh=%s -avrg=5 " + ...
+        %     "-outmsh=%s -ofmt=vtk_polydata -surf_corr=0.8", ...
+        %     strjoin([data_dir, INFO.patient_ID, 'LA_mesh.vtk'], '/'), ...
+        %     strjoin([data_dir, INFO.patient_ID, 'LA_mesh_resampled.vtk'], '/'));
+        % [status, ~] = system(command);
+        % if status ~= 0
+        %     error("Meshtool exit status is non-zero.")
+        % end
     
         [vertices_rsmp, triangles_rsmp] = read_vtk(strjoin([data_dir, INFO.patient_ID, 'LA_mesh_resampled.vtk'], '/'));
         vertices_rsmp = vertices_rsmp';
@@ -167,7 +167,7 @@ for iexp = 1:length(experiments)
     
         % Sphere and cylinder computation on mesh
         is_resampled = true;
-        vertex_voltage_map_rsmp = vertex_voltage_mapping(vertices_rsmp, triangles_rsmp, voltages, coordinates, is_resampled, thrs);
+        vertex_voltage_map_rsmp = vertex_voltage_mapping(vertices_rsmp, triangles_rsmp, voltages, coordinates, is_resampled, voltage_thrs);
         final_voltage_map_rsmp = max(vertex_voltage_map_rsmp, [], 2);
         [f_rsmp, lase] = entropy_calculation(final_voltage_map_rsmp, verbose);
     
