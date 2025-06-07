@@ -19,7 +19,7 @@ function [f, entropy] = entropy_calculation(signalVertices_2, verbose)
     % signalVertices_2 = signalVertices_2 * 0.003;
     h = histogram(signalVertices_2,'Normalization','probability');
     %h.BinWidth = 100;
-    h.BinWidth = 0.3;
+    % h.BinWidth = 0.3;
     
     % numBins = h.NumBins;
 
