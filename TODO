@@ -2,13 +2,11 @@
 
 Gestire istogramma e calcolo entropia i.e. Provare differenti bin width: 0.1, 0.3, auto
 
-Gestire resmapling mesh per avere 5000±100 vertices i.e. prova -avrg=2 e vai di try and error
-
-prova codice marta per vedere il numero di vertici mesh downsampled
+Prova codice marta per vedere il numero di vertici mesh downsampled
 
 Investiga su motivo p-value così basso
 
-
+Chiedere se sia sensato filtrare gli EGM tra 30 e 300 Hz
 --------------------------------------------------
 
 Calcola voltage map su paziente 77 con mappa in SR

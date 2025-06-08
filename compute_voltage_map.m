@@ -5,8 +5,9 @@ data_dir = "processed_data";
 patient_dirs = dir(data_dir);
 out_dir = "results";
 
-experiments = ["thrs_<15_filt"];
+experiments = ["thrs_<15_filt_3.0_bin", "thrs_<15_filt_variable_bin"];
 voltage_thrss = [15];
+bind_width = {0.3, "variable"};
 
 verbose = false;
 for iexp = 1:length(experiments)
