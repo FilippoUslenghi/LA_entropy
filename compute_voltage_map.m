@@ -6,7 +6,7 @@ patient_dirs = dir(data_dir);
 out_dir = "results";
 
 experiments = ["thrs_<15_filt_0.3_bin", "thrs_<15_filt_variable_bin"];
-voltage_thrss = [15];
+voltage_thrss = [15, 15];
 bind_widths = {"0.3", "variable"};
 
 verbose = false;

@@ -220,6 +220,13 @@ class Carser:
 
     __call__ = parse_study
 
+    def get_LA_SR_map(self, xml_tree) -> ET.Element:
+        """
+        Get the LA SR map from the study XML file.
+        """
+        pass
+        raise NotImplementedError("get_LA_SR_map is not yet implemented.")
+
     def get_LA_map(self, xml_tree) -> ET.Element:
         """
         Get the LA map from the study XML file.
