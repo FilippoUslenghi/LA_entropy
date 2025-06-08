@@ -7,6 +7,9 @@ Prova codice marta per vedere il numero di vertici mesh downsampled
 Investiga su motivo p-value così basso
 
 Chiedere se sia sensato filtrare gli EGM tra 30 e 300 Hz
+
+Salvare i risultati degli esperimenti come file JSON
+
 --------------------------------------------------
 
 Calcola voltage map su paziente 77 con mappa in SR
