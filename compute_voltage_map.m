@@ -108,9 +108,7 @@ for iexp = 1:length(experiments)
                 electrode_index = find(strcmp(POINTS.electrodes{ee}, POINTS.columns));
                 
                 egm_signal = POINTS.signals(pp,:,electrode_index)';
-                if mod(iexp,2) == 0
-                    egm_signal = filtfilt(b1, a1, egm_signal);
-                end
+                egm_signal = filtfilt(b1, a1, egm_signal);
     
                 % Extract the windows from the signal
                 egm_windows = arrayfun(@(a,b) egm_signal(a:b), ...
