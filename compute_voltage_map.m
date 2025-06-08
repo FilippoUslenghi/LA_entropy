@@ -7,12 +7,13 @@ out_dir = "results";
 
 experiments = ["thrs_<15_filt_0.3_bin", "thrs_<15_filt_variable_bin"];
 voltage_thrss = [15];
-bind_width = {0.3, "variable"};
+bind_widths = {"0.3", "variable"};
 
 verbose = false;
 for iexp = 1:length(experiments)
     voltage_thrs = voltage_thrss(iexp);
     experiment = experiments(iexp);
+    bin_width = bind_widths{iexp};
     mkdir(strjoin([out_dir, experiment], '/'))
     
     disp([experiment, voltage_thrs, iexp])
@@ -144,7 +145,7 @@ for iexp = 1:length(experiments)
         is_resampled = false;
         vertex_voltage_map = vertex_voltage_mapping(MESH.vertices, MESH.triangles, voltages, coordinates, is_resampled, voltage_thrs);
         final_voltage_map = max(vertex_voltage_map, [], 2);
-        [f, entropy] = entropy_calculation(final_voltage_map, verbose);
+        [f, entropy] = entropy_calculation(final_voltage_map, bin_width, verbose);
     
         % Write mesh to disk for meshtool
         % vtkwrite(strjoin([data_dir, INFO.patient_ID, 'LA_mesh.vtk'], '/'), 'polydata', ...
@@ -168,7 +169,7 @@ for iexp = 1:length(experiments)
         is_resampled = true;
         vertex_voltage_map_rsmp = vertex_voltage_mapping(vertices_rsmp, triangles_rsmp, voltages, coordinates, is_resampled, voltage_thrs);
         final_voltage_map_rsmp = max(vertex_voltage_map_rsmp, [], 2);
-        [f_rsmp, lase] = entropy_calculation(final_voltage_map_rsmp, verbose);
+        [f_rsmp, lase] = entropy_calculation(final_voltage_map_rsmp, bin_width, verbose);
     
         data(ipat,:) = {INFO.patient_ID, 0, lase};
     end

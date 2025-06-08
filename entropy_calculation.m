@@ -1,5 +1,5 @@
 %% Progetto punto 3)
-function [f, entropy] = entropy_calculation(signalVertices_2, verbose)
+function [f, entropy] = entropy_calculation(signalVertices_2, bin_width, verbose)
     %Calcolare l'entropia di Shannon dei valori calcolati al punto 2).
     %Per prima cosa stimerei la distribuzione di probabilità semplicemente con un istogramma a prescindere della densità locale
     %dei punti. 
@@ -19,7 +19,9 @@ function [f, entropy] = entropy_calculation(signalVertices_2, verbose)
     % signalVertices_2 = signalVertices_2 * 0.003;
     h = histogram(signalVertices_2,'Normalization','probability');
     %h.BinWidth = 100;
-    % h.BinWidth = 0.3;
+    if bin_width ~= "variable"
+        h.BinWidth = double(bin_width);
+    end
     
     % numBins = h.NumBins;
 
