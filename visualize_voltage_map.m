@@ -11,6 +11,7 @@ data_dir = "processed_data";
 patient_ID = "46";
 voltage_thrs = 15;
 filtering = true;
+bind_width = "variable";
 verbose = true;
 
 % Load the data
@@ -132,7 +133,7 @@ material dull
 cameraLight;
 if AF, clim([0.05 0.24]); else, clim([0.05, 1.5]); end
 
-[f, entropy] = entropy_calculation(final_voltage_map, verbose);
+[f, entropy] = entropy_calculation(final_voltage_map, bin_width, verbose);
 
 % Write mesh to disk for meshtool
 % vtkwrite(strjoin([data_dir, patient_ID, 'LA_mesh.vtk'], '/'), 'polydata', ...
@@ -169,4 +170,4 @@ material dull
 cameraLight;
 if AF, clim([0.05 0.24]); else, clim([0.05, 1.5]); end
 
-[f_rsmp, lase] = entropy_calculation(final_voltage_map_rsmp, verbose);
+[f_rsmp, lase] = entropy_calculation(final_voltage_map_rsmp, bin_width, verbose);
