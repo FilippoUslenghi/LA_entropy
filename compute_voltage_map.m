@@ -5,18 +5,22 @@ data_dir = "processed_data";
 patient_dirs = dir(data_dir);
 out_dir = "results";
 
-experiments = ["thrs_<15_filt_0.3_bin", "thrs_<15_filt_variable_bin"];
-voltage_thrss = [15, 15];
-bind_widths = {"0.3", "variable"};
-
 verbose = false;
-for iexp = 1:length(experiments)
-    voltage_thrs = voltage_thrss(iexp);
-    experiment = experiments(iexp);
-    bin_width = bind_widths{iexp};
-    mkdir(strjoin([out_dir, experiment], '/'))
+% Parameters
+voltage_thrss = [15];
+bind_widths = {"0.3", "0.2", "0.1", "0.05", "0.01", "variable"};
+
+% Parameters grid
+[V, B] = ndgrid(voltage_thrss, bind_widths);
+
+for iexp = 1:numel(V)
+    voltage_thrs = V(iexp);
+    bin_width = B{iexp};
     
-    disp([experiment, voltage_thrs, iexp])
+    experiment_dir = strjoin(["voltageThrs", voltage_thrs, "binWidth", bin_width], "_");
+    mkdir(strjoin([out_dir, experiment_dir], '/'))
+    
+    disp(experiment_dir)
     
     n_patients = sum(~isnan(cellfun(@str2double, {patient_dirs.name})));
     data = table('Size', [n_patients, 3], 'VariableTypes', ["string" "double" "double"], ...
@@ -25,7 +29,7 @@ for iexp = 1:length(experiments)
     patients_rhythms = load("patients_rhythms.mat").patients_rhythms;
 
     % For each patient
-    parfor ipat = 1:length(patient_dirs)
+    for ipat = 1:length(patient_dirs)
         % Deactivate warning for performance reasons
         warning('off', 'signal:findpeaks:largeMinPeakHeight')
         warning('off', 'MATLAB:MKDIR:DirectoryExists')
@@ -44,9 +48,9 @@ for iexp = 1:length(experiments)
     
         % Load the data
         path_to_data = strjoin([data_dir patient_dir.name], '/');
-        INFO = load(strjoin([path_to_data "LA_info.mat"], '/'))
-        MESH = load(strjoin([path_to_data "LA_mesh.mat"], '/'))
-        POINTS = load(strjoin([path_to_data "LA_points_data.mat"], '/'))
+        INFO = load(strjoin([path_to_data "LA_info.mat"], '/'));
+        MESH = load(strjoin([path_to_data "LA_mesh.mat"], '/'));
+        POINTS = load(strjoin([path_to_data "LA_points_data.mat"], '/'));
     
         INFO.fs = double(INFO.fs);
         
@@ -171,7 +175,14 @@ for iexp = 1:length(experiments)
         final_voltage_map_rsmp = max(vertex_voltage_map_rsmp, [], 2);
         [f_rsmp, lase] = entropy_calculation(final_voltage_map_rsmp, bin_width, verbose);
     
-        data(ipat,:) = {INFO.patient_ID, 0, lase};
+        data(ipat,:) = {INFO.patient_ID, entropy, lase};
     end
-    writetable(data, strjoin([out_dir, experiment, "lase.csv"], '/'))
+    data = rmmissing(data);
+    
+    experiment_parameters = struct("voltage_thrs", voltage_thrs, "bin_width", bin_width);
+    experiment_struct = struct("parameters", experiment_parameters, "results", data);
+    
+    fid = fopen(strjoin([out_dir, experiment_dir, "results.json"], '/'), 'w');
+    fprintf(fid, '%s', jsonencode(experiment_struct, PrettyPrint=true));
+    fclose(fid);
 end
