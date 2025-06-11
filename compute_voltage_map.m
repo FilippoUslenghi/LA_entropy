@@ -29,7 +29,7 @@ for iexp = 1:numel(V)
     patients_rhythms = load("patients_rhythms.mat").patients_rhythms;
 
     % For each patient
-    for ipat = 1:length(patient_dirs)
+    parfor ipat = 1:length(patient_dirs)
         % Deactivate warning for performance reasons
         warning('off', 'signal:findpeaks:largeMinPeakHeight')
         warning('off', 'MATLAB:MKDIR:DirectoryExists')
