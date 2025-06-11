@@ -1,4 +1,5 @@
 clc
+close all
 clearvars
 
 % Deactivate warning for performance reasons
