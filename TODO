@@ -1,14 +1,10 @@
 (?) Cosa facciamo dei pazienti con il pacing del CS? Li stiamo considerando come gli altri
 
-Gestire istogramma e calcolo entropia i.e. Provare differenti bin width: 0.1, 0.3, auto
-
-Prova codice marta per vedere il numero di vertici mesh downsampled
-
 Investiga su motivo p-value così basso
 
-Chiedere se sia sensato filtrare gli EGM tra 30 e 300 Hz
+Capire se sia sensato filtrare gli EGM tra 30 e 300 Hz
 
-Salvare i risultati degli esperimenti come file JSON
+Capire se sia sensato calcolare l'entropia sulla mesh originale (quindi senza downsampling)
 
 --------------------------------------------------
 
