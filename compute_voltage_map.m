@@ -146,10 +146,10 @@ for iexp = 1:numel(V)
         end
     
         % Sphere and cylinder computation on mesh
-        is_resampled = false;
-        vertex_voltage_map = vertex_voltage_mapping(MESH.vertices, MESH.triangles, voltages, coordinates, is_resampled, voltage_thrs);
-        final_voltage_map = max(vertex_voltage_map, [], 2);
-        [f, entropy] = entropy_calculation(final_voltage_map, bin_width, verbose);
+        % is_resampled = false;
+        % vertex_voltage_map = vertex_voltage_mapping(MESH.vertices, MESH.triangles, voltages, coordinates, is_resampled, voltage_thrs);
+        % final_voltage_map = max(vertex_voltage_map, [], 2);
+        % [f, entropy] = entropy_calculation(final_voltage_map, bin_width, verbose);
     
         % Write mesh to disk for meshtool
         % vtkwrite(strjoin([data_dir, INFO.patient_ID, 'LA_mesh.vtk'], '/'), 'polydata', ...
