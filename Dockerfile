@@ -5,10 +5,17 @@ COPY requirements.txt /workspace
 WORKDIR /workspace
 
 RUN apt-get update && apt-get install -y \
+    sudo \
     tree \
     man  
 
 RUN pip install -r requirements.txt
+
+ARG USER_ID
+ARG GROUP_ID
+
+RUN useradd admin && echo "admin:admin" | chpasswd && adduser admin sudo
+USER admin
 
 # Install the image
 # docker build -f Dockerfile -t uslenghi_image .
