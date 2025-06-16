@@ -2,14 +2,10 @@
 
 Investiga su motivo p-value così basso
 
-Capire se sia sensato filtrare gli EGM tra 30 e 300 Hz
-
-Capire se sia sensato calcolare l'entropia sulla mesh originale (quindi senza downsampling)
-
 --------------------------------------------------
 
 Calcola voltage map su paziente 77 con mappa in SR
 
-Cerca quali pazienti hanno mappa sia in FA che SR
+Cerca quali pazienti hanno mappa sia in FA che SR (?)
 
 Pazienti in SR: 55, 77
