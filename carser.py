@@ -697,11 +697,6 @@ if __name__ == "__main__":
             continue
         if patient == "Export_REDO-PVI-07_09_2024-13-39-51":
             continue
-            carser = Carser(
-                os.path.join(data_dir, patient, "REDO PVI 07_09_2024 13-39-51.xml")
-            )
-            carser()
-            continue
         if patient == "114" or patient == "122":
             # Skip patients due to no PentaRay/OctaRay connectors
             continue
