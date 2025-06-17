@@ -11,10 +11,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN pip install -r requirements.txt
 
-# Create the admin home for VSCode docker extension
-RUN mkdir /home/admin
-RUN chwown admin:admin /home/admin
-
+RUN groupadd -g 1012 admin
 RUN useradd admin -u 1012 -g 1012 -m -s /bin/bash && echo "admin:admin" | chpasswd && adduser admin sudo
 USER admin
 
