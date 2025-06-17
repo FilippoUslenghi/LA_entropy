@@ -32,6 +32,7 @@ class Carser:
         self.study_xml_path = path_to_study_xml
         self.study_dir = os.path.dirname(self.study_xml_path)
         self.patient = study_path.split("/")[4]
+        self.SR = True
         self.LA_map = None
         self.LA_map_name = None
         self.LA_mesh_file = None
@@ -177,14 +178,13 @@ class Carser:
         # Get the LA map in the study with the highest number of points
         LA_map = None
         LA_maps = []
-        bad_strings = ["Re", "POST", "RF"]
         for carto_map in carto_maps.findall("Map"):
             # Get the map name
             map_name = carto_map.get("Name")
             if (
                 map_name is not None
                 and "LA" in map_name
-                and not any(bad_string in map_name for bad_string in bad_strings)
+                and "SR" in map_name
             ):
                 n_points = int(carto_map.find("CartoPoints").get("Count"))
                 LA_maps.append((carto_map, n_points))
@@ -231,7 +231,9 @@ class Carser:
         return points_list
 
     def get_points_data(self, points) -> dict[str, np.ndarray | list]:
-
+        """
+        Get the data of the points from the LA map.
+        """
         # Discover the number of valid points to preallocate the signals array
         valid_points = 0
         for point in points:
@@ -703,6 +705,10 @@ if __name__ == "__main__":
 
     for patient in sorted(os.listdir(data_dir)):
 
+        # Select only patient 77 for SR mapping
+        if patient != "77":
+            continue
+
         if not os.path.isdir(os.path.join(data_dir, patient)):
             continue
         if patient == "to-process":
@@ -736,27 +742,28 @@ if __name__ == "__main__":
 
         try:
             carser()
-            with open("skipped_points.log", "at") as file:
+            with open("LA_SR_skipped_points.log", "at") as file:
                 file.write(
                     f"Patient {patient} skipped {(carser.LA_skipped_points/len(carser.LA_points)*100):.1f}% of {len(carser.LA_points)} points. Remaining {len(carser.LA_points)-carser.LA_skipped_points} points.\n Identified {carser.LA_points_with_missing_spline} points with missing splines ({(carser.LA_points_with_missing_spline/len(carser.LA_points)*100):.1f}%). \n"
                 )
             sio.savemat(
-                os.path.join(out_dir, "LA_mesh.mat"),
+                os.path.join(out_dir, "LA_SR_mesh.mat"),
                 carser.LA_mesh,
                 oned_as="column",
             )
             sio.savemat(
-                os.path.join(out_dir, "LA_points_data.mat"),
+                os.path.join(out_dir, "LA_SR_points_data.mat"),
                 carser.LA_points_data,
                 oned_as="column",
             )
             sio.savemat(
-                os.path.join(out_dir, "LA_info.mat"),
+                os.path.join(out_dir, "LA_SR_info.mat"),
                 {
                     "patient_ID": patient,
                     "map_name": carser.LA_map_name,
                     "fs": carser.fs,
                     "CS_pacing": carser.CS_pacing,
+                    "SR": carser.SR,
                 },
                 oned_as="column",
             )
