@@ -1,3 +1,9 @@
+"""
+This class was modified to extract the LA map of patients '55' and '77' that had both mapping in AF and SR, the biggest one was
+the AF map.
+This was done on request of the clinicians to see the value of entropy of these maps, compared to the one in AF.
+"""
+
 import os
 import sys
 import xml.etree.ElementTree as ET
@@ -181,11 +187,7 @@ class Carser:
         for carto_map in carto_maps.findall("Map"):
             # Get the map name
             map_name = carto_map.get("Name")
-            if (
-                map_name is not None
-                and "LA" in map_name
-                and "SR" in map_name
-            ):
+            if map_name is not None and "LA" in map_name and "SR" in map_name:
                 n_points = int(carto_map.find("CartoPoints").get("Count"))
                 LA_maps.append((carto_map, n_points))
 
