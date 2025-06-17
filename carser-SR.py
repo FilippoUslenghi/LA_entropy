@@ -706,7 +706,7 @@ if __name__ == "__main__":
     for patient in sorted(os.listdir(data_dir)):
 
         # Select only patient 77 for SR mapping
-        if patient != "77":
+        if patient != "55" or patient != "77":
             continue
 
         if not os.path.isdir(os.path.join(data_dir, patient)):
