@@ -152,7 +152,7 @@ if AF, clim([0.05 0.24]); else, clim([0.05, 1.5]); end
 %     error("Meshtool exit status is non-zero.")
 % end
 
-[vertices_rsmp, triangles_rsmp] = read_vtk(strjoin([data_dir, patient_ID, 'LA_mesh_resampled.vtk'], '/'));
+[vertices_rsmp, triangles_rsmp] = read_vtk(strjoin([data_dir, patient_ID, 'LA_SR_mesh_resampled.vtk'], '/'));
 vertices_rsmp = vertices_rsmp';
 triangles_rsmp = triangles_rsmp';
 
