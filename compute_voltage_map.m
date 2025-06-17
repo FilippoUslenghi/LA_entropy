@@ -8,10 +8,10 @@ out_dir = "results";
 verbose = false;
 % Parameters
 voltage_thrss = [15];
-bind_widths = {"0.3", "0.2", "0.1", "0.05", "0.01", "variable"};
+bin_widths = {"variable"};
 
 % Parameters grid
-[V, B] = ndgrid(voltage_thrss, bind_widths);
+[V, B] = ndgrid(voltage_thrss, bin_widths);
 
 for iexp = 1:numel(V)
     voltage_thrs = V(iexp);
