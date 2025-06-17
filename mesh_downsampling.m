@@ -21,9 +21,9 @@ for i = 1:size(dir_struct, 1)
     "-outmsh=%s -ofmt=vtk_polydata -surf_corr=0.8", ...
     strjoin([data_dir, patient_ID, 'LA_mesh.vtk'], '/'), ...
     strjoin([data_dir, patient_ID, 'LA_mesh_resampled.vtk'], '/'));
-    [status, ~] = system(command);
+    [status, msg] = system(command);
     if status ~= 0
-        error("Meshtool exit status is non-zero.")
+        error(msg)
     end
 
     [vertices, triangles] = read_vtk(strjoin([data_dir, ...
