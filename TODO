@@ -1,14 +1,15 @@
-(?) Cosa facciamo dei pazienti con il pacing del CS? Li stiamo considerando come gli altri
+(?) Cosa facciamo dei pazienti con il pacing del CS? Al momento li stiamo considerando come gli altri
+
+Contare numero pazienti on CS (implementazione attributo CS_pacing con carser.py)
+	Se sono tanti escludere il segnale del CS dagli EGM (CD detection sul CS signal e poi esclusi la finestra)
 
 Investiga su motivo p-value così basso
 
-Capire se sia sensato filtrare gli EGM tra 30 e 300 Hz
-
-Capire se sia sensato calcolare l'entropia sulla mesh originale (quindi senza downsampling)
+Migliorare votlage_map
 
 --------------------------------------------------
 
 Calcola voltage map su paziente 77 con mappa in SR
+	Pazienti in SR: 55, 77
 
-Cerca quali pazienti hanno mappa sia in FA che SR
-
+Cerca quali pazienti hanno mappa sia in FA che SR (?)
