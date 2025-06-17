@@ -9,7 +9,7 @@ warning('off', 'MATLAB:MKDIR:DirectoryExists')
 load("patients_rhythms.mat")
 data_dir = "processed_data";
 
-patient_ID = "77";
+patient_ID = "55";
 voltage_thrs = 15;
 filtering = true;
 bin_width = "variable";
@@ -137,18 +137,18 @@ if AF, clim([0.05 0.24]); else, clim([0.05, 1.5]); end
 [f, entropy] = entropy_calculation(final_voltage_map, bin_width, verbose);
 
 % Write mesh to disk for meshtool
-% vtkwrite(strjoin([data_dir, patient_ID, 'LA_mesh.vtk'], '/'), 'polydata', ...
-%     'triangle', vertices(:,1), vertices(:,2), vertices(:,3), triangles);
+vtkwrite(strjoin([data_dir, patient_ID, 'LA_mesh.vtk'], '/'), 'polydata', ...
+    'triangle', vertices(:,1), vertices(:,2), vertices(:,3), triangles);
 
 % Resample mesh with meshtool
-% command = sprintf("./meshtool/meshtool resample surfmesh -msh=%s -avrg=2 " + ...
-%     "-outmsh=%s -ofmt=vtk_polydata -surf_corr=0.8", ...
-%     strjoin([data_dir, patient_ID, 'LA_mesh.vtk'], '/'), ...
-%     strjoin([data_dir, patient_ID, 'LA_mesh_resampled.vtk'], '/'));
-% [status, ~] = system(command);
-% if status ~= 0
-%     error("Meshtool exit status is non-zero.")
-% end
+command = sprintf("./meshtool/meshtool resample surfmesh -msh=%s -avrg=2 " + ...
+    "-outmsh=%s -ofmt=vtk_polydata -surf_corr=0.8", ...
+    strjoin([data_dir, patient_ID, 'LA_mesh.vtk'], '/'), ...
+    strjoin([data_dir, patient_ID, 'LA_mesh_resampled.vtk'], '/'));
+[status, ~] = system(command);
+if status ~= 0
+    error("Meshtool exit status is non-zero.")
+end
 
 [vertices_rsmp, triangles_rsmp] = read_vtk(strjoin([data_dir, patient_ID, 'LA_mesh_resampled.vtk'], '/'));
 vertices_rsmp = vertices_rsmp';
