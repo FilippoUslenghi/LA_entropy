@@ -134,7 +134,7 @@ class Carser:
         self.LA_map_name = self.LA_map.get("Name")
         if self.LA_map_name is not None and "CS" in self.LA_map_name:
             self.CS_pacing = True
-        return
+
         # Get the mesh file of the LA map
         self.LA_mesh_file = self.LA_map.get("FileNames")
         if self.LA_mesh_file is None:
