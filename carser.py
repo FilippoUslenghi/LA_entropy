@@ -700,10 +700,6 @@ if __name__ == "__main__":
 
     for patient in sorted(os.listdir(data_dir)):
 
-        # Debugging
-        if patient != "77":
-            continue
-
         if not os.path.isdir(os.path.join(data_dir, patient)):
             continue
         if patient == "to-process":
