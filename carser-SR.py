@@ -184,6 +184,7 @@ class Carser:
         # Get the LA map in the study with the highest number of points
         LA_map = None
         LA_maps = []
+        bad_words = ["AF", "FA"]
         for carto_map in carto_maps.findall("Map"):
             # Get the map name
             map_name = carto_map.get("Name")
@@ -191,6 +192,7 @@ class Carser:
                 map_name is not None
                 and "LA" in map_name
                 and ("SR" in map_name or "CS" in map_name)
+                and not any(bad_word in map_name for bad_word in bad_words)
             ):
                 n_points = int(carto_map.find("CartoPoints").get("Count"))
                 LA_maps.append((carto_map, n_points))
