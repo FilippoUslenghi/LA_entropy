@@ -36,9 +36,9 @@ class Carser:
         self.LA_map_name = None
         self.LA_mesh_file = None
         self.LA_mesh = None
-        self.fs = 1000.0
         self.LA_points = []
-        self.points_data = {}
+        self.LA_points_data = {}
+        self.fs = 1000.0
         self.skipped_points = 0
         self.points_with_missing_spline = 0
         self.catheter = None
@@ -141,82 +141,8 @@ class Carser:
         # Get the points from the LA map
         self.LA_points = self.get_points(self.LA_map)
 
-        # Discover the number of valid points to preallocate the signals array
-        valid_points = 0
-        for point in self.LA_points:
-            _, flag, _ = self.get_signals(point, dry_run=True)
-            if flag == ["valid"]:
-                valid_points += 1
-
-        # Preallocate the signals array
-        self.points_data["points_IDs"] = np.zeros([valid_points], dtype=np.int32)
-
-        self.points_data["signals"] = np.zeros(
-            [valid_points, 2500, 12 + 9 + 40], dtype=np.float32
-        )  # Overestimated number of columns, will be shrinked later
-
-        self.points_data["columns"] = []
-
-        # Preallocate the positions array
-        self.points_data["positions"] = np.zeros(
-            [valid_points, (40 if self.catheter == "MCC_DX" else 15), 3, 152]
-        )
-        # self.points_data["electrodes"] = np.ndarray([valid_points], dtype='<U17')
-        self.points_data["electrodes"] = []
-
-        j = 0
-        for i, point in enumerate(self.LA_points):
-            point_ID = point.get("ID")
-            if point_ID is None:
-                raise ValueError("Attribute 'ID' not found in the XML file")
-
-            # logger.debug(f"Processing point {point_ID} of patient {self.patient}")
-
-            # Get the signals from the point
-            signals, columns, reference_channel = self.get_signals(point)
-            # Get the electrode positions from the point
-            positions, electrodes = self.get_electrode_positions(point)
-
-            # Check if the signals, positions, or electrodes are None
-            if (
-                signals is None
-                or columns is None
-                or positions is None
-                or electrodes is None
-                or reference_channel is None
-            ):
-                j -= 1
-                continue
-
-            # Get the point ID
-            self.points_data["points_IDs"][i + j] = int(point_ID)
-            # Store the signals in the signals array
-            self.points_data["signals"][i + j, :, : signals.shape[1]] = signals
-            # Get the column names
-            self.points_data["columns"] = columns
-            # Store the reference channel
-            self.points_data["reference_channel"] = reference_channel
-
-            # Store the electrode positions in the positions array
-            self.points_data["positions"][
-                i + j, : positions.shape[0], : positions.shape[1], : positions.shape[2]
-            ] = positions
-            if self.catheter == "20_POLE_A":
-                self.points_data["electrodes"] = self.pole_a_dipoles
-            elif self.catheter == "MCC_DX":
-                self.points_data["electrodes"] = self.mcc_dx_dipoles
-
-        # Remove the empty preallocated space
-        index = np.argwhere(self.points_data["points_IDs"] == 0)
-        if index.size == 0:
-            index = len(self.points_data["points_IDs"])
-        else:
-            index = index[0].item()
-        self.points_data["points_IDs"] = self.points_data["points_IDs"][:index]
-        self.points_data["signals"] = self.points_data["signals"][
-            :index, :, np.sum(self.points_data["signals"] != 0, axis=(0, 1)) != 0
-        ]
-        self.points_data["positions"] = self.points_data["positions"][:index, :, :, :]
+        # Get the data from the points
+        self.LA_points_data = self.get_points_data(self.LA_points)
 
     __call__ = parse_study
 
@@ -300,6 +226,88 @@ class Carser:
         points_list = points_export_collection.findall("Point")
 
         return points_list
+
+    def get_points_data(self, points) -> dict[str, np.ndarray | list]:
+
+        # Discover the number of valid points to preallocate the signals array
+        valid_points = 0
+        for point in points:
+            _, flag, _ = self.get_signals(point, dry_run=True)
+            if flag == ["valid"]:
+                valid_points += 1
+
+        points_data = {}
+        # Preallocate the signals array
+        points_data["points_IDs"] = np.zeros([valid_points], dtype=np.int32)
+
+        points_data["signals"] = np.zeros(
+            [valid_points, 2500, 12 + 9 + 40], dtype=np.float32
+        )  # Overestimated number of columns, will be shrinked later
+
+        points_data["columns"] = []
+
+        # Preallocate the positions array
+        points_data["positions"] = np.zeros(
+            [valid_points, (40 if self.catheter == "MCC_DX" else 15), 3, 152]
+        )
+        # points_data["electrodes"] = np.ndarray([valid_points], dtype='<U17')
+        points_data["electrodes"] = []
+
+        j = 0
+        for i, point in enumerate(points):
+            point_ID = point.get("ID")
+            if point_ID is None:
+                raise ValueError("Attribute 'ID' not found in the XML file")
+
+            # logger.debug(f"Processing point {point_ID} of patient {self.patient}")
+
+            # Get the signals from the point
+            signals, columns, reference_channel = self.get_signals(point)
+            # Get the electrode positions from the point
+            positions, electrodes = self.get_electrode_positions(point)
+
+            # Check if the signals, positions, or electrodes are None
+            if (
+                signals is None
+                or columns is None
+                or positions is None
+                or electrodes is None
+                or reference_channel is None
+            ):
+                j -= 1
+                continue
+
+            # Get the point ID
+            points_data["points_IDs"][i + j] = int(point_ID)
+            # Store the signals in the signals array
+            points_data["signals"][i + j, :, : signals.shape[1]] = signals
+            # Get the column names
+            points_data["columns"] = columns
+            # Store the reference channel
+            points_data["reference_channel"] = reference_channel
+
+            # Store the electrode positions in the positions array
+            points_data["positions"][
+                i + j, : positions.shape[0], : positions.shape[1], : positions.shape[2]
+            ] = positions
+            if self.catheter == "20_POLE_A":
+                points_data["electrodes"] = self.pole_a_dipoles
+            elif self.catheter == "MCC_DX":
+                points_data["electrodes"] = self.mcc_dx_dipoles
+
+        # Remove the empty preallocated space
+        index = np.argwhere(points_data["points_IDs"] == 0)
+        if index.size == 0:
+            index = len(points_data["points_IDs"])
+        else:
+            index = index[0].item()
+        points_data["points_IDs"] = points_data["points_IDs"][:index]
+        points_data["signals"] = points_data["signals"][
+            :index, :, np.sum(points_data["signals"] != 0, axis=(0, 1)) != 0
+        ]
+        points_data["positions"] = points_data["positions"][:index, :, :, :]
+
+        return points_data
 
     def get_signals(
         self, point: ET.Element, dry_run: bool = False
@@ -691,6 +699,11 @@ if __name__ == "__main__":
     data_dir = "/workspace/raw_data/CARTO_DAVIDE/"
 
     for patient in sorted(os.listdir(data_dir)):
+
+        # Debugging
+        if patient != "77":
+            continue
+
         if not os.path.isdir(os.path.join(data_dir, patient)):
             continue
         if patient == "to-process":
