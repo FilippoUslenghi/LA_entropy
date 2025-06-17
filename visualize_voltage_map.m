@@ -9,10 +9,10 @@ warning('off', 'MATLAB:MKDIR:DirectoryExists')
 load("patients_rhythms.mat")
 data_dir = "processed_data";
 
-patient_ID = "46";
+patient_ID = "77";
 voltage_thrs = 15;
 filtering = true;
-bind_width = "variable";
+bin_width = "variable";
 verbose = true;
 
 % Load the data
