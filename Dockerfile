@@ -15,7 +15,7 @@ RUN pip install -r requirements.txt
 RUN mkdir /home/admin
 RUN chwown admin:admin /home/admin
 
-RUN useradd admin && echo "admin:admin" | chpasswd && adduser admin sudo
+RUN useradd admin -u 1012 -g 1012 -m -s /bin/bash && echo "admin:admin" | chpasswd && adduser admin sudo
 USER admin
 
 # Install the image
