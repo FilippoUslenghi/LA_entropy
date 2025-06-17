@@ -38,9 +38,10 @@ class Carser:
         self.LA_mesh = None
         self.LA_points = []
         self.LA_points_data = {}
+        self.LA_skipped_points = 0
+        self.LA_points_with_missing_spline = 0
         self.fs = 1000.0
-        self.skipped_points = 0
-        self.points_with_missing_spline = 0
+        self.CS_pacing = False
         self.catheter = None
         self.pole_a_dipoles = [
             "20A_1-2",
@@ -130,7 +131,9 @@ class Carser:
 
         # Get the name of the LA map
         self.LA_map_name = self.LA_map.get("Name")
-
+        if self.LA_map_name is not None and "CS" in self.LA_map_name:
+            self.CS_pacing = True
+        return
         # Get the mesh file of the LA map
         self.LA_mesh_file = self.LA_map.get("FileNames")
         if self.LA_mesh_file is None:
@@ -556,7 +559,7 @@ class Carser:
             print(
                 f"Skipping point {point.get('ID')} of patient {self.patient} due to no connectors."
             )
-            self.skipped_points += 1
+            self.LA_skipped_points += 1
             return None, None
 
         if (
@@ -568,7 +571,7 @@ class Carser:
             logging.error(
                 f"Skipping point {point.get('ID')} of patient {self.patient} due to no positions file."
             )
-            self.skipped_points += 1
+            self.LA_skipped_points += 1
             return None, None
 
         # Get the positions file
@@ -599,7 +602,7 @@ class Carser:
             logging.error(
                 f"Skipping point {point.get('ID')} of patient {self.patient} due to no spline."
             )
-            self.skipped_points += 1
+            self.LA_skipped_points += 1
             return None, None
         positions_df = positions_df.iloc[index:, :]
 
@@ -609,8 +612,8 @@ class Carser:
             logging.error(
                 f"Skipping point {point.get('ID')} of patient {self.patient} due to missing of some timestamps or entire spline."
             )
-            self.skipped_points += 1
-            self.points_with_missing_spline += 1
+            self.LA_skipped_points += 1
+            self.LA_points_with_missing_spline += 1
             return None, None
 
         # Get the positions of the dipoles
@@ -735,7 +738,7 @@ if __name__ == "__main__":
             carser()
             with open("skipped_points.log", "at") as file:
                 file.write(
-                    f"Patient {patient} skipped {(carser.skipped_points/len(carser.LA_points)*100):.1f}% of {len(carser.LA_points)} points. Remaining {len(carser.LA_points)-carser.skipped_points} points.\n Identified {carser.points_with_missing_spline} points with missing splines ({(carser.points_with_missing_spline/len(carser.LA_points)*100):.1f}%). \n"
+                    f"Patient {patient} skipped {(carser.LA_skipped_points/len(carser.LA_points)*100):.1f}% of {len(carser.LA_points)} points. Remaining {len(carser.LA_points)-carser.LA_skipped_points} points.\n Identified {carser.LA_points_with_missing_spline} points with missing splines ({(carser.LA_points_with_missing_spline/len(carser.LA_points)*100):.1f}%). \n"
                 )
             sio.savemat(
                 os.path.join(out_dir, "LA_mesh.mat"),
@@ -744,7 +747,7 @@ if __name__ == "__main__":
             )
             sio.savemat(
                 os.path.join(out_dir, "LA_points_data.mat"),
-                carser.points_data,
+                carser.LA_points_data,
                 oned_as="column",
             )
             sio.savemat(
@@ -753,6 +756,7 @@ if __name__ == "__main__":
                     "patient_ID": patient,
                     "map_name": carser.LA_map_name,
                     "fs": carser.fs,
+                    "CS_pacing": carser.CS_pacing,
                 },
                 oned_as="column",
             )
