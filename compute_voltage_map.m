@@ -42,7 +42,7 @@ for iexp = 1:numel(V)
         end
         % Skip the patient 118 because it has too many points
         if patient_dir.name == "118"
-            data(ipat,:) = {"118", 0, 0};
+            data(ipat,:) = {"118", nan};
             continue
         end
     
