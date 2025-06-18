@@ -23,7 +23,7 @@ for iexp = 1:numel(V)
     disp(experiment_dir)
     
     n_patients = sum(~isnan(cellfun(@str2double, {patient_dirs.name})));
-    data = table('Size', [n_patients, 3], 'VariableTypes', ["string" "double"], ...
+    data = table('Size', [n_patients, 2], 'VariableTypes', ["string" "double"], ...
         'VariableNames', ["Patient ID" "LASE"]);
     
     patients_rhythms = load("patients_rhythms.mat").patients_rhythms;
