@@ -5,5 +5,6 @@ Contare numero pazienti on CS (implementazione attributo CS_pacing con carser.py
 
 Investiga su motivo p-value così basso
 
-Fare esperimento con raggio cilindro d = 2 oppure 1/2*avg_edge_length oppure avg_edge_length
+Fare esperimento con raggio cilindro d = 2 oppure 1/2*avg_edge_length oppure avg_edge_length (fatto 1/2*avg e avg)
 
+Guardare risultato openep su paziente 55, mappa in PACECS, e confrontare con immagini inviate a francesco su teams
