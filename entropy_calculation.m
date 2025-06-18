@@ -41,7 +41,11 @@ function [f, entropy] = entropy_calculation(signalVertices_2, bin_width, verbose
 
     entropy = log(w) - sum(p.*log(p));
     if verbose
-        disp("Entropy = " + entropy)
+        if is_resampled
+            disp("Lase = " + entropy)
+        else
+            disp("Entropy = " + entropy)
+        end
     end
     %entropy2 = - sum(p.*log(p));
     %disp(entropy2)
