@@ -23,8 +23,8 @@ for iexp = 1:numel(V)
     disp(experiment_dir)
     
     n_patients = sum(~isnan(cellfun(@str2double, {patient_dirs.name})));
-    data = table('Size', [n_patients, 3], 'VariableTypes', ["string" "double" "double"], ...
-        'VariableNames', ["Patient ID" "Entropy" "LASE"]);
+    data = table('Size', [n_patients, 3], 'VariableTypes', ["string" "double"], ...
+        'VariableNames', ["Patient ID" "LASE"]);
     
     patients_rhythms = load("patients_rhythms.mat").patients_rhythms;
 
@@ -77,9 +77,10 @@ for iexp = 1:numel(V)
         voltages = [];
     
         % Create the filters
-        [b1, a1] = butter(3, (2*[30, 300])/INFO.fs);
+        [b_egm, a_egm] = butter(3, (2*[30, 300])/INFO.fs);
+        [b1, a1] = butter(3, (2*[10, 300])/INFO.fs);
         [b2, a2] = butter(3, (40)/INFO.fs);
-    
+
         % For each point export
         for pp = 1:length(POINTS.points_IDs)
     
@@ -96,10 +97,10 @@ for iexp = 1:numel(V)
     
             thr = 0.08;
             [~, ecg_peak_train] = findpeaks(ecg_activation, "MinPeakHeight", thr, ...
-                "MinPeakDistance", 600);
+                "MinPeakDistance", 300);
     
             % Create the windows
-            window_bounds = [-50; 100];
+            window_bounds = [-30; 100];
             ecg_windows = ecg_peak_train + window_bounds;
             ecg_windows = min(max(1,ecg_windows), 2500);
     
@@ -113,7 +114,7 @@ for iexp = 1:numel(V)
                 electrode_index = find(strcmp(POINTS.electrodes{ee}, POINTS.columns));
                 
                 egm_signal = POINTS.signals(pp,:,electrode_index)';
-                egm_signal = filtfilt(b1, a1, egm_signal);
+                egm_signal = filtfilt(b_egm, a_egm, egm_signal);
 
                 % Extract the windows from the signal
                 egm_windows = arrayfun(@(a,b) egm_signal(a:b), ...
@@ -175,7 +176,7 @@ for iexp = 1:numel(V)
         final_voltage_map_rsmp = max(vertex_voltage_map_rsmp, [], 2);
         [f_rsmp, lase] = entropy_calculation(final_voltage_map_rsmp, bin_width, verbose);
     
-        data(ipat,:) = {INFO.patient_ID, entropy, lase};
+        data(ipat,:) = {INFO.patient_ID, lase};
     end
     data = rmmissing(data);
     
