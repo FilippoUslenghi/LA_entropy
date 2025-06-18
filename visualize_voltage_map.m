@@ -9,14 +9,14 @@ warning('off', 'MATLAB:MKDIR:DirectoryExists')
 load("patients_rhythms.mat")
 data_dir = "processed_data";
 
-patient_ID = "55";
+patient_dir = "55";
 voltage_thrs = 15;
 filtering = true;
 bin_width = "variable";
 verbose = true;
 
 % Load the data
-path_to_data = strjoin([data_dir patient_ID], '/');
+path_to_data = strjoin([data_dir patient_dir], '/');
 load(strjoin([path_to_data "LA_info.mat"], '/'))
 load(strjoin([path_to_data "LA_mesh.mat"], '/'))
 load(strjoin([path_to_data "LA_points_data.mat"], '/'))
