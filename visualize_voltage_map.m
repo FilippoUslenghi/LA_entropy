@@ -146,9 +146,9 @@ command = sprintf("./meshtool/meshtool resample surfmesh -msh=%s -avrg=2 " + ...
     "-outmsh=%s -ofmt=vtk_polydata -surf_corr=0.8", ...
     strjoin([data_dir, patient_ID, 'LA_mesh.vtk'], '/'), ...
     strjoin([data_dir, patient_ID, 'LA_mesh_resampled.vtk'], '/'));
-[status, ~] = system(command);
+[status, msg] = system(command);
 if status ~= 0
-    error("Meshtool exit status is non-zero.")
+    error(msg)
 end
 
 [vertices_rsmp, triangles_rsmp] = read_vtk(strjoin([data_dir, patient_ID, 'LA_mesh_resampled.vtk'], '/'));
