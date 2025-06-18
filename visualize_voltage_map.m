@@ -46,7 +46,8 @@ coordinates = [];
 voltages = [];
 
 % Create the filters
-[b1, a1] = butter(3, (2*[30, 300])/fs);
+[b_egm, a_egm] = butter(3, (2*[30, 300])/fs);
+[b1, a1] = butter(3, (2*[10, 300])/fs);
 [b2, a2] = butter(3, (40)/fs);
 
 % For each point export
@@ -65,10 +66,10 @@ for pp = 1:length(points_IDs)
 
     thr = 0.08;
     [~, ecg_peak_train] = findpeaks(ecg_activation, "MinPeakHeight", thr, ...
-        "MinPeakDistance", 600);
+        "MinPeakDistance", 300);
 
     % Create the windows
-    window_bounds = [-50; 100];
+    window_bounds = [-30; 100];
     ecg_windows = ecg_peak_train + window_bounds;
     ecg_windows = min(max(1,ecg_windows), 2500);
 
@@ -83,7 +84,7 @@ for pp = 1:length(points_IDs)
         
         egm_signal = signals(pp,:,electrode_index)';
         if filtering
-            egm_signal = filtfilt(b1, a1, egm_signal);
+            egm_signal = filtfilt(b_egm, a_egm, egm_signal);
         end
 
         % Extract the windows from the signal
