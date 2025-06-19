@@ -5,8 +5,8 @@ function vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltag
     coordinates = coordinates(voltages < voltage_upper_bound, :);
     voltages = voltages(voltages < voltage_upper_bound);
     
-    r = 8;
-    d = 2;
+    r = 5;
+    d = 1.5;
 
     TR = triangulation(triangles, vertices);
     vertices_normals = vertices + vertexNormal(TR);
@@ -14,7 +14,7 @@ function vertex_voltage_map = vertex_voltage_mapping(vertices, triangles, voltag
     if is_resampled
         E = edges(TR);
         avg_edge_length = mean(sqrt(sum((TR.Points(E(:,1), :) - TR.Points(E(:,2), :)).^2, 2)));
-        d = 1/2 * avg_edge_length;
+        % d = 1/2 * avg_edge_length;
     end
     
     % Sphere
