@@ -192,15 +192,14 @@ class Carser:
         # Check if there are any LA maps in the study
         if len(LA_maps) == 0:
             raise ValueError("No LA map found in the study.")
+        # Check if there are more than one LA map
+        if len(LA_maps) > 1:
+            logger.warning("More than one LA map found in the study.")
 
         # Sort the LA maps by the number of points
         sorted_LA_maps = sorted(LA_maps, key=lambda x: x[1], reverse=True)
         # Get the first LA map with the highest number of points
         LA_map = sorted_LA_maps[0][0]
-
-        # Check if there are more than one LA map
-        if len(sorted_LA_maps) > 1:
-            logger.error("More than one LA map found in the study.")
 
         # Check if one LA map was found
         if LA_map is None:
@@ -762,3 +761,4 @@ if __name__ == "__main__":
             )
         except Exception as e:
             logging.error(f"Error processing patient {patient}: {e}", exc_info=True)
+    print("Processing completed.")
