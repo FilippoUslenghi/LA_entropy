@@ -1,10 +1,7 @@
 (?) Cosa facciamo dei pazienti con il pacing del CS? Al momento li stiamo considerando come gli altri
 
 Contare numero pazienti on CS (implementazione attributo CS_pacing con carser.py)
-	Se sono tanti escludere il segnale del CS dagli EGM (CD detection sul CS signal e poi esclusi la finestra)
+	Se sono tanti, escludere il segnale del CS dagli EGM (peak detection sul CS signal e poi escludi la finestra)
 
 Investiga su motivo p-value così basso
 
-Fare esperimento con raggio cilindro d = 2 oppure 1/2*avg_edge_length oppure avg_edge_length (fatto 1/2*avg e avg)
-
-Guardare risultato openep su paziente 55, mappa in PACECS, e confrontare con immagini inviate a francesco su teams
