@@ -11,7 +11,6 @@ data_dir = "processed_data";
 
 patient_dir = "55";
 voltage_thrs = 15;
-filtering = true;
 bin_width = "variable";
 verbose = true;
 
@@ -71,21 +70,43 @@ for pp = 1:length(points_IDs)
     % Create the windows
     window_bounds = [-30; 100];
     ecg_windows = ecg_peak_train + window_bounds;
-    ecg_windows = min(max(1,ecg_windows), 2500);
+    ecg_windows = min(max(1,ecg_windows), length(ecg_signal));
 
     % Exclude the ecg windows from the EGM signals
     egm_windows_bounds = [ecg_windows, [length(ecg_signal); 1]];
     egm_windows_bounds = reshape(circshift(egm_windows_bounds(:), 1), ...
         size(egm_windows_bounds))';
 
+    if CS_pacing
+        CS_channel = 'CS9-CS10';
+        if patient_ID == "55"
+            CS_channel = 'CS3-CS4';
+        end
+        CS_signal_index = find(strcmp(columns, CS_channel));
+        CS_signal = signals(pp, :, CS_signal_index);
+
+        CS_thr = 5.0;
+        [~, CS_peak_train] = findpeaks(CS_signal, "MinPeakHeight", CS_thr, ...
+            "MinPeakDistance", 300);
+
+        CS_window_bounds = [-15; 15];
+        CS_windows = CS_peak_train + CS_window_bounds;
+        CS_windows = min(max(1,CS_windows), length(CS_signal))';
+        
+        final_windows = [egm_windows_bounds; CS_windows];
+        sorted_final_windows = sort(final_windows(:));
+        starting_points = (1:2:length(sorted_final_windows));
+        ending_points = (2:2:length(sorted_final_windows));
+
+        egm_windows_bounds = [sorted_final_windows(starting_points), sorted_final_windows(ending_points)];
+    end
+
     % For each electrode
     for ee = 1:length(electrodes)
         electrode_index = find(strcmp(electrodes{ee}, columns));
         
         egm_signal = signals(pp,:,electrode_index)';
-        if filtering
-            egm_signal = filtfilt(b_egm, a_egm, egm_signal);
-        end
+        egm_signal = filtfilt(b_egm, a_egm, egm_signal);
 
         % Extract the windows from the signal
         egm_windows = arrayfun(@(a,b) egm_signal(a:b), ...
