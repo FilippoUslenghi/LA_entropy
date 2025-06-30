@@ -4,3 +4,8 @@ PER I APZIENTI CON CS PACING: Escludere il segnale del CS dagli EGM (peak detect
 
 Investiga su motivo p-value così basso
 
+------------------------------------
+su computer del lab:
+    elimina da processed_data la cartella 116 (dovrebbe essere vuota)
+                              il file a.vtk nella cartella 110
+                              aggiorna il file LA_points_data.m della cartella 55
