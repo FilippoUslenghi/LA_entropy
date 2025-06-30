@@ -2,4 +2,5 @@ FA: scala voltage map [0.05 0.24]
 SR: [0.05 0.5]
 deep scar: < 0.02
 
-Pazienti con CS pacing: 16
+N. pazienti con CS pacing: 16
+Pazienti con CS pacing: 105 112 119_1 129 147 151 42 55 56 57 84 85 89 91 94 96
