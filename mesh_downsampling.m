@@ -30,3 +30,4 @@ for i = 1:size(dir_struct, 1)
         patient_ID, 'LA_mesh_resampled.vtk'], '/'));
     num_vertices = [num_vertices; size(vertices,2)];
 end
+disp("Processing completed.")
