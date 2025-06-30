@@ -17,7 +17,7 @@ for iexp = 1:numel(V)
     voltage_thrs = V(iexp);
     bin_width = B{iexp};
     
-    experiment_dir = strjoin(["voltageThrs", voltage_thrs, "binWidth", bin_width], "_");
+    experiment_dir = strjoin(["voltageThrs", voltage_thrs, "binWidth", bin_width, "sphere", 5, "cylinder", 1.5], "_");
     mkdir(strjoin([out_dir, experiment_dir], '/'))
     
     disp(experiment_dir)
@@ -180,7 +180,7 @@ for iexp = 1:numel(V)
     end
     data = rmmissing(data);
     
-    experiment_parameters = struct("voltage_thrs", voltage_thrs, "bin_width", bin_width);
+    experiment_parameters = struct("voltage_thrs", voltage_thrs, "bin_width", bin_width, "sphere_radius", 5, "cylinder_radius", 1.5);
     experiment_struct = struct("parameters", experiment_parameters, "results", data);
     
     fid = fopen(strjoin([out_dir, experiment_dir, "results.json"], '/'), 'w');
