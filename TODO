@@ -1,6 +1,8 @@
 (?) Cosa facciamo dei pazienti con il pacing del CS? Al momento li stiamo considerando come gli altri
 
-PER I APZIENTI CON CS PACING: Escludere il segnale del CS dagli EGM (peak detection sul CS signal e poi escludi la finestra)
+PER I PAZIENTI CON CS PACING: Escludere il segnale del CS dagli EGM (peak detection sul CS signal e poi escludi la finestra)
+
+Aggiorna compute_voltage_map.m con il codice del CS_pacing
 
 Investiga su motivo p-value così basso
 
