@@ -720,10 +720,10 @@ if __name__ == "__main__":
         if patient == "67":
             # Skip patients due to no LA map
             continue
-        if patient != "55":  # Debugging
-            continue
 
-        out_dir = os.path.join(data_dir.replace("raw_data", "processed_data"), patient)
+        out_dir = os.path.join(
+            data_dir.replace("raw_data/CARTO_DAVIDE", "processed_data"), patient
+        )
         os.makedirs(out_dir, exist_ok=True)
         # Get the subfolders of the patient
         subfolders = os.listdir(os.path.join(data_dir, patient))
