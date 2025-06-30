@@ -458,8 +458,14 @@ class Carser:
                 "MCC_Dx_BiPolar_40(236)",
             ]
 
-        try:
-            columns = pole_columns + ECG_columns + CS_columns
+        if self.CS_pacing:
+            with open(ECG_file_path, "r") as f:
+                f.readline()
+                f.readline()
+                header = f.readline().strip().split()
+                present_cs_columns = [col for col in CS_columns if col in header]
+
+            columns = pole_columns + ECG_columns + present_cs_columns
             signal_data = (
                 pd.read_csv(
                     ECG_file_path,
@@ -471,7 +477,7 @@ class Carser:
                 .reindex(columns, axis=1)
                 .to_numpy(dtype=np.float32)
             )
-        except:
+        else:
             columns = pole_columns + ECG_columns
             signal_data = (
                 pd.read_csv(
@@ -713,6 +719,8 @@ if __name__ == "__main__":
             continue
         if patient == "67":
             # Skip patients due to no LA map
+            continue
+        if patient != "55":  # Debugging
             continue
 
         out_dir = os.path.join(data_dir.replace("raw_data", "processed_data"), patient)
