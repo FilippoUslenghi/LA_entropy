@@ -5,4 +5,4 @@ voltage_thrs,bin_width,Phenotype AUC,Phenotype p-value,Substrate AUC,Substrate p
 15,0.2,0.833,0.0,0.803,0.0,0.782,0.0,voltageThrs_15_binWidth_0.2,,
 15,0.3,0.846,0.0,0.811,0.0,0.794,0.0,voltageThrs_15_binWidth_0.3,,
 15,variable,0.853,0.0,0.821,0.0,0.799,0.0,voltageThrs_15_binWidth_variable,,
-15,variable,0.761,0.0,0.778,0.0,0.719,0.0,voltageThrs_15_binWidth_variable_sphere_5_cylinder_1.5,5.0,1.5
+15,variable,0.745,0.0,0.778,0.0,0.699,0.0,voltageThrs_15_binWidth_variable_sphere_5_cylinder_1.5,5.0,1.5
