@@ -10,3 +10,4 @@ meshtool
 figures
 openep-core
 .~lock.*
+.venv
