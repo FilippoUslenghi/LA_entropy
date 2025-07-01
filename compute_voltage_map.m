@@ -109,6 +109,30 @@ for iexp = 1:numel(V)
             egm_windows_bounds = reshape(circshift(egm_windows_bounds(:), 1), ...
                 size(egm_windows_bounds))';
     
+            if INFO.CS_pacing
+                CS_channel = 'CS9-CS10';
+                if INFO.patient_ID == "55"
+                    CS_channel = 'CS3-CS4';
+                end
+                CS_signal_index = find(strcmp(POINTS.columns, CS_channel));
+                CS_signal = POINTS.signals(pp, :, CS_signal_index);
+        
+                CS_thr = 5.0;
+                [~, CS_peak_train] = findpeaks(CS_signal, "MinPeakHeight", CS_thr, ...
+                    "MinPeakDistance", 300);
+        
+                CS_window_bounds = [-15; 15];
+                CS_windows = CS_peak_train + CS_window_bounds;
+                CS_windows = min(max(1,CS_windows), length(CS_signal))';
+                
+                final_windows = [egm_windows_bounds; CS_windows];
+                sorted_final_windows = sort(final_windows(:));
+                starting_points = (1:2:length(sorted_final_windows));
+                ending_points = (2:2:length(sorted_final_windows));
+        
+                egm_windows_bounds = [sorted_final_windows(starting_points), sorted_final_windows(ending_points)];
+            end
+
             % For each electrode
             for ee = 1:length(POINTS.electrodes)
                 electrode_index = find(strcmp(POINTS.electrodes{ee}, POINTS.columns));
